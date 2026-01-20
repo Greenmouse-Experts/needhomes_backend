@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AccountType {
+  INVESTOR
+  CORPORATE
+}
+
+enum AccountStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum AccountVerificationStatus {
+  PENDING
+  VERIFIED
+}
+
+model User {
+  id                          Int                       @id @default(autoincrement())
+  firstName                   String
+  lastName                    String
+  email                       String                    @unique
+  phone                       String                    @unique
+  password                    String
+  otp                         String?
+  accountType                 AccountType
+  account_status              AccountStatus             @default(ACTIVE)
+  account_verification_status AccountVerificationStatus @default(PENDING)
+  referral_source             String?
+  createdAt                   DateTime                  @default(now())
+  updatedAt                   DateTime                  @updatedAt
+
+  // Relation
+  verification_document VerificationDocument? @relation("UserVerification")
+  bank_account          BankAccount?          @relation("UserBankAccount")
+}
+
+model VerificationDocument {
+  id              Int      @id @default(autoincrement())
+  user_id         Int      @unique
+  idType          String
+  document        String
+  frontPage       String
+  backPage        String?
+  submitedAt      DateTime @default(now())
+  RejectionReason String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation("UserVerification", fields: [user_id], references: [id])
+}
+
+model BankAccount {
+  id            Int      @id @default(autoincrement())
+  user_id       Int      @unique
+  accountNumber String
+  bank_code     String
+  bank_name     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation("UserBankAccount", fields: [user_id], references: [id])
+}
