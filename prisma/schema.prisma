@@ -6,10 +6,12 @@
 
 generator client {
   provider = "prisma-client-js"
+
 }
 
 datasource db {
   provider = "postgresql"
+
 }
 
 enum AccountType {
@@ -36,42 +38,99 @@ model User {
   email                       String                    @unique
   phone                       String                    @unique
   password                    String
-  otp                         String?
+  isEmailVerified             Boolean                   @default(false)
   accountType                 AccountType
   account_status              AccountStatus             @default(ACTIVE)
   account_verification_status AccountVerificationStatus @default(PENDING)
   referral_source             String?
   createdAt                   DateTime                  @default(now())
   updatedAt                   DateTime                  @updatedAt
+  deletedAt                   DateTime?
 
-  // Relation
+  // Relations
   verification_document VerificationDocument? @relation("UserVerification")
   bank_account          BankAccount?          @relation("UserBankAccount")
+  roles                 UserRole[]
 }
 
 model VerificationDocument {
-  id              Int      @id @default(autoincrement())
-  user_id         Int      @unique
+  id              Int       @id @default(autoincrement())
+  user_id         Int       @unique
   idType          String
   document        String
   frontPage       String
   backPage        String?
-  submitedAt      DateTime @default(now())
+  submitedAt      DateTime  @default(now())
   RejectionReason String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
 
   user User @relation("UserVerification", fields: [user_id], references: [id])
 }
 
 model BankAccount {
-  id            Int      @id @default(autoincrement())
-  user_id       Int      @unique
+  id            Int       @id @default(autoincrement())
+  user_id       Int       @unique
   accountNumber String
   bank_code     String
   bank_name     String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
 
   user User @relation("UserBankAccount", fields: [user_id], references: [id])
+}
+
+// ========================================
+// RBAC Models
+// ========================================
+
+model Role {
+  id          String           @id @default(uuid())
+  name        String           @unique // USER, ADMIN, SUPER_ADMIN
+  description String?
+  permissions RolePermission[]
+  users       UserRole[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  key         String           @unique // e.g. "user.create_own", "user.delete_all"
+  description String?
+  roles       RolePermission[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+// Join table: User <-> Role (Many-to-Many)
+model UserRole {
+  userId Int
+  roleId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now())
+
+  @@id([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+}
+
+// Join table: Role <-> Permission (Many-to-Many)
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
 }

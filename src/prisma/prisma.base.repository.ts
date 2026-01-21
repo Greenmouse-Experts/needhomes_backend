@@ -27,7 +27,7 @@ export class PrismaBaseRepository<
     select?: any,
   ): Promise<T | null | any> {
     const result = await this.getModelDelegate().findFirst({
-      where: { ...uniqueFilter, deleted_at: null },
+      where: { ...uniqueFilter, deletedAt: null },
       include,
       select,
     });
@@ -43,7 +43,7 @@ export class PrismaBaseRepository<
   async update(uniqueFilter: WhereUniqueInput, data: UpdateInput): Promise<T> {
     const payload = normalizeDates({ ...data }, 'toUTC');
     const result = await this.getModelDelegate().update({
-      where: { ...uniqueFilter, deleted_at: null },
+      where: { ...uniqueFilter, deletedAt: null },
       data: payload,
     });
     return normalizeDates(result, 'toTZ');
@@ -51,8 +51,8 @@ export class PrismaBaseRepository<
 
   async delete(uniqueFilter: WhereUniqueInput): Promise<T> {
     const result = await this.getModelDelegate().update({
-      where: { ...uniqueFilter, deleted_at: null },
-      data: { deleted_at: new Date() }, // still UTC by default
+      where: { ...uniqueFilter, deletedAt: null },
+      data: { deletedAt: new Date() }, // still UTC by default
     });
     return normalizeDates(result, 'toTZ');
   }
@@ -71,7 +71,7 @@ export class PrismaBaseRepository<
     return this.getModelDelegate().count({
       where: {
         ...filters,
-        deleted_at: deleted === 'true' ? { not: null } : null,
+        deletedAt: deleted === 'true' ? { not: null } : null,
       },
     });
   }
@@ -79,7 +79,7 @@ export class PrismaBaseRepository<
   async countDistinct(filters: WhereInput, by?: any): Promise<number> {
     const result = await this.getModelDelegate().groupBy({
       by,
-      where: { ...filters, deleted_at: null },
+      where: { ...filters, deletedAt: null },
     });
     return result.length;
   }
@@ -96,13 +96,13 @@ export class PrismaBaseRepository<
     const results = await this.getModelDelegate().findMany({
       where: {
         ...filters,
-        deleted_at: deleted === 'true' ? { not: null } : null,
+        deletedAt: deleted === 'true' ? { not: null } : null,
       },
       select,
       include,
       skip: (page - 1) * limit,
       take: +limit,
-      orderBy: { created_at: orderBy },
+      orderBy: { createdAt: orderBy },
     });
     return normalizeDates(results, 'toTZ');
   }
@@ -117,13 +117,13 @@ export class PrismaBaseRepository<
   ): Promise<T[]> {
     const { page = 1, limit = 20 } = pagination ?? {};
     const results = await this.getModelDelegate().findMany({
-      where: { ...filters, deleted_at: null },
+      where: { ...filters, deletedAt: null },
       select,
       include,
       skip: (page - 1) * limit,
       take: limit,
       distinct,
-      orderBy: { created_at: orderBy },
+      orderBy: { createdAt: orderBy },
     });
     return normalizeDates(results, 'toTZ');
   }
@@ -138,7 +138,7 @@ export class PrismaBaseRepository<
     const payloadCreate = normalizeDates({ ...upsertData.create }, 'toUTC');
     const payloadUpdate = normalizeDates({ ...upsertData.update }, 'toUTC');
     const result = await this.getModelDelegate().upsert({
-      where: { ...upsertData.where, deleted_at: null },
+      where: { ...upsertData.where, deletedAt: null },
       create: payloadCreate,
       update: payloadUpdate,
     });
@@ -152,10 +152,10 @@ export class PrismaBaseRepository<
     select?: any,
   ): Promise<T[]> {
     const results = await this.getModelDelegate().findMany({
-      where: { ...filters, deleted_at: null },
+      where: { ...filters, deletedAt: null },
       select,
       include,
-      orderBy: { created_at: orderBy },
+      orderBy: { createdAt: orderBy },
     });
     return normalizeDates(results, 'toTZ');
   }
@@ -166,7 +166,7 @@ export class PrismaBaseRepository<
   ): Promise<T> {
     const payload = normalizeDates({ ...data }, 'toUTC');
     const result = await this.getModelDelegate().updateMany({
-      where: { ...uniqueFilter, deleted_at: null },
+      where: { ...uniqueFilter, deletedAt: null },
       data: payload,
     });
     return normalizeDates(result, 'toTZ');

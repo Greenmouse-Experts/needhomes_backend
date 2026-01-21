@@ -20,7 +20,7 @@ export class PrismaService
       adapter: new PrismaPg({
         connectionString: databaseUrl,
       }),
-      log: ['query', 'info', 'warn', 'error'],
+      log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
     });
     // Register the middleware directly
     this.$extends({
