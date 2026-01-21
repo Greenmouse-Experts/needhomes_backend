@@ -1,4 +1,4 @@
-import { toTimezone } from '../generic/generic.utils';
+import { toTimezone } from 'app/common';
 import { Prisma } from '@prisma/client';
 
 export function base() {

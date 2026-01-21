@@ -1,5 +1,5 @@
 import { PrismaClient, Prisma } from '@prisma/client';
-import { normalizeDates } from '../generic/generic.utils';
+import { normalizeDates } from 'app/common';
 
 export class PrismaBaseRepository<
   T,
@@ -87,12 +87,12 @@ export class PrismaBaseRepository<
   async findManyWithPagination(
     filters?: WhereInput,
     pagination?: { page?: number; limit?: number },
-    orderBy: any = { created_at: 'desc' },
+    orderBy: Prisma.SortOrder = 'desc',
     include?: any,
     select?: any,
     deleted?: string | boolean,
   ): Promise<T[]> {
-    const { page = 1, limit = 20 } = pagination;
+    const { page = 1, limit = 20 } = pagination ?? {};
     const results = await this.getModelDelegate().findMany({
       where: {
         ...filters,
@@ -115,7 +115,7 @@ export class PrismaBaseRepository<
     select?: any,
     distinct?: any,
   ): Promise<T[]> {
-    const { page = 1, limit = 20 } = pagination;
+    const { page = 1, limit = 20 } = pagination ?? {};
     const results = await this.getModelDelegate().findMany({
       where: { ...filters, deleted_at: null },
       select,
