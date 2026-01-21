@@ -10,7 +10,7 @@ import * as crypto from 'crypto';
 import { RoleName } from 'app/common';
 import { internationalisePhoneNumber } from 'app/common/utils/phonenumber.utils';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, AccountType } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -28,8 +28,8 @@ export class AuthService {
    */
   async register(registerDto: RegisterDto, accountType: string) {
     // Validate accountType
-    if (!accountType || !['INVESTOR', 'CORPORATE'].includes(accountType.toUpperCase())) {
-      throw new BadRequestException('Account type must be either INVESTOR or CORPORATE');
+    if (!accountType || !['INDIVIDUAL', 'CORPORATE'].includes(accountType.toUpperCase())) {
+      throw new BadRequestException('Account type must be either INDIVIDUAL or CORPORATE');
     }
 
     // Internationalize phone number
@@ -57,13 +57,14 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
     // 3. Create user (unverified) - Type-safe with Prisma.UserCreateInput
+    const normalizedAccountType = accountType.toUpperCase();
     const userData: Prisma.UserCreateInput = {
       email: registerDto.email,
       password: hashedPassword,
       firstName: registerDto.firstName,
       lastName: registerDto.lastName,
       phone: internationalPhone,
-      accountType: accountType.toUpperCase() as 'INVESTOR' | 'CORPORATE',
+      accountType: normalizedAccountType as AccountType,
       isEmailVerified: false,
       ...(registerDto.referral_source && { referral_source: registerDto.referral_source }),
     };
@@ -261,7 +262,7 @@ export class AuthService {
    * Get roles and permissions with caching
    */
   private async getRolesAndPermissionsWithCache(
-    userId: number,
+    userId: string,
   ): Promise<[string[], string[]]> {
     // Try to get from cache first
     const [cachedRoles, cachedPermissions] = await Promise.all([
@@ -299,7 +300,7 @@ export class AuthService {
    * Generate JWT tokens with session tracking
    */
   private async generateTokensWithSession(
-    userId: number,
+    userId: string,
     email: string,
     roles: string[],
     permissions: string[],

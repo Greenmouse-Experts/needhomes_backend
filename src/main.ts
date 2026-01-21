@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 
 async function bootstrap() {
@@ -24,6 +25,9 @@ async function bootstrap() {
 
   // Apply global exception filter
   app.useGlobalFilters(new GlobalExceptionFilter());
+
+  // Apply global logging interceptor
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
   // Apply global response interceptor
   app.useGlobalInterceptors(new TransformInterceptor());

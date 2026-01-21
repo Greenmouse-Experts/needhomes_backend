@@ -15,7 +15,7 @@ datasource db {
 }
 
 enum AccountType {
-  INVESTOR
+  INDIVIDUAL
   CORPORATE
 }
 
@@ -32,7 +32,7 @@ enum AccountVerificationStatus {
 }
 
 model User {
-  id                          Int                       @id @default(autoincrement())
+  id                          String                    @id @default(uuid())
   firstName                   String
   lastName                    String
   email                       String                    @unique
@@ -51,11 +51,16 @@ model User {
   verification_document VerificationDocument? @relation("UserVerification")
   bank_account          BankAccount?          @relation("UserBankAccount")
   roles                 UserRole[]
+
+  @@index([email])
+  @@index([phone])
+  @@index([deletedAt])
+  @@index([createdAt])
 }
 
 model VerificationDocument {
-  id              Int       @id @default(autoincrement())
-  user_id         Int       @unique
+  id              String    @id @default(uuid())
+  user_id         String    @unique
   idType          String
   document        String
   frontPage       String
@@ -67,11 +72,14 @@ model VerificationDocument {
   deletedAt       DateTime?
 
   user User @relation("UserVerification", fields: [user_id], references: [id])
+
+  @@index([user_id])
+  @@index([deletedAt])
 }
 
 model BankAccount {
-  id            Int       @id @default(autoincrement())
-  user_id       Int       @unique
+  id            String    @id @default(uuid())
+  user_id       String    @unique
   accountNumber String
   bank_code     String
   bank_name     String
@@ -80,6 +88,9 @@ model BankAccount {
   deletedAt     DateTime?
 
   user User @relation("UserBankAccount", fields: [user_id], references: [id])
+
+  @@index([user_id])
+  @@index([deletedAt])
 }
 
 // ========================================
@@ -107,7 +118,7 @@ model Permission {
 
 // Join table: User <-> Role (Many-to-Many)
 model UserRole {
-  userId Int
+  userId String
   roleId String
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

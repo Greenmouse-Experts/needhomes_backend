@@ -131,7 +131,7 @@ export class AuthController {
   @Get('roles/user/:userId')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequirePermissions(PermissionKey.ROLE_READ)
-  async getUserRoles(@Param('userId', ParseIntPipe) userId: number) {
+  async getUserRoles(@Param('userId') userId: string) {
     const [roles, permissions] = await Promise.all([
       this.rbacService.getUserRoles(userId),
       this.rbacService.getUserPermissions(userId),

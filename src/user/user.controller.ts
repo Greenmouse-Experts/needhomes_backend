@@ -32,7 +32,7 @@ export class UserController {
    */
   @Get('profile')
   @RequirePermissions(PermissionKey.USER_READ_OWN)
-  getMyProfile(@CurrentUser('id') userId: number) {
+  getMyProfile(@CurrentUser('id') userId: string) {
     return this.userService.findOne(userId);
   }
 
@@ -43,7 +43,7 @@ export class UserController {
   @Put('profile')
   @RequirePermissions(PermissionKey.USER_UPDATE_OWN)
   updateMyProfile(
-    @CurrentUser('id') userId: number,
+    @CurrentUser('id') userId: string,
     @Body() updateData: UpdateUserDto,
   ) {
     return this.userService.update(userId, updateData);
@@ -55,7 +55,7 @@ export class UserController {
    */
   @Delete('me')
   @RequirePermissions(PermissionKey.USER_DELETE_OWN)
-  deleteMyAccount(@CurrentUser('id') userId: number) {
+  deleteMyAccount(@CurrentUser('id') userId: string) {
     return this.userService.softDelete(userId);
   }
 
@@ -79,7 +79,7 @@ export class UserController {
    */
   @Get(':id')
   @RequirePermissions(PermissionKey.USER_READ_ALL)
-  getUserById(@Param('id', ParseIntPipe) id: number) {
+  getUserById(@Param('id') id: string) {
     return this.userService.findOne(id);
   }
 
@@ -100,7 +100,7 @@ export class UserController {
   @Put(':id')
   @RequirePermissions(PermissionKey.USER_UPDATE_ALL)
   updateUser(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateData: UpdateUserDto,
   ) {
     return this.userService.update(id, updateData);
@@ -112,7 +112,7 @@ export class UserController {
    */
   @Delete(':id')
   @RequirePermissions(PermissionKey.USER_DELETE_ALL)
-  deleteUser(@Param('id', ParseIntPipe) id: number) {
+  deleteUser(@Param('id') id: string) {
     return this.userService.softDelete(id);
   }
 }

@@ -95,7 +95,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   /**
    * Cache user permissions with 15 minute TTL
    */
-  async cacheUserPermissions(userId: number, permissions: string[]): Promise<void> {
+  async cacheUserPermissions(userId: string, permissions: string[]): Promise<void> {
     const key = `user:${userId}:permissions`;
     await this.set(key, permissions, 900); // 15 minutes
   }
@@ -103,7 +103,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   /**
    * Get cached user permissions
    */
-  async getUserPermissions(userId: number): Promise<string[] | undefined> {
+  async getUserPermissions(userId: string): Promise<string[] | undefined> {
     const key = `user:${userId}:permissions`;
     return await this.get<string[]>(key);
   }
@@ -111,7 +111,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   /**
    * Cache user roles with 15 minute TTL
    */
-  async cacheUserRoles(userId: number, roles: string[]): Promise<void> {
+  async cacheUserRoles(userId: string, roles: string[]): Promise<void> {
     const key = `user:${userId}:roles`;
     await this.set(key, roles, 900); // 15 minutes
   }
@@ -119,7 +119,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   /**
    * Get cached user roles
    */
-  async getUserRoles(userId: number): Promise<string[] | undefined> {
+  async getUserRoles(userId: string): Promise<string[] | undefined> {
     const key = `user:${userId}:roles`;
     return await this.get<string[]>(key);
   }
@@ -127,7 +127,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   /**
    * Invalidate user cache (call this when user roles/permissions change)
    */
-  async invalidateUserCache(userId: number): Promise<void> {
+  async invalidateUserCache(userId: string): Promise<void> {
     await this.delete(`user:${userId}:permissions`);
     await this.delete(`user:${userId}:roles`);
   }
@@ -192,7 +192,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
    */
   async storeRefreshToken(
     refreshToken: string,
-    userId: number,
+    userId: string,
     sessionId: string,
     deviceInfo?: any,
   ): Promise<void> {
@@ -227,7 +227,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
    * Tracks all active sessions (devices) for a user
    */
   async addUserSession(
-    userId: number,
+    userId: string,
     sessionId: string,
     deviceInfo: any,
   ): Promise<void> {

@@ -42,7 +42,7 @@ export class UserService {
   /**
    * Find one user by ID
    */
-  async findOne(id: number) {
+  async findOne(id: string) {
     const user = await this.userRepository.findOne(
       { id },
       {
@@ -90,7 +90,7 @@ export class UserService {
   /**
    * Update a user
    */
-  async update(id: number, data: any) {
+  async update(id: string, data: any) {
     const user = await this.userRepository.findOne({ id });
 
     if (!user) {
@@ -103,7 +103,7 @@ export class UserService {
   /**
    * Soft delete a user
    */
-  async softDelete(id: number) {
+  async softDelete(id: string) {
     const user = await this.userRepository.findOne({ id });
 
     if (!user) {

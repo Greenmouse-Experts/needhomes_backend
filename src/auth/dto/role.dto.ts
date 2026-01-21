@@ -1,17 +1,17 @@
-import { IsEnum, IsInt } from 'class-validator';
+import { IsEnum, IsInt, IsString } from 'class-validator';
 import { RoleName } from 'app/common';
 
 export class AssignRoleDto {
-  @IsInt()
-  userId: number;
+  @IsString()
+  userId: string;
 
   @IsEnum(RoleName)
   roleName: RoleName;
 }
 
 export class RemoveRoleDto {
-  @IsInt()
-  userId: number;
+  @IsString()
+  userId: string;
 
   @IsEnum(RoleName)
   roleName: RoleName;

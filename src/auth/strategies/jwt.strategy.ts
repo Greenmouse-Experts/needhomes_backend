@@ -92,7 +92,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * Checks cache first, falls back to database if not found
    */
   private async getRolesAndPermissionsWithCache(
-    userId: number,
+    userId: string,
   ): Promise<[string[], string[]]> {
     // Try cache first
     const [cachedRoles, cachedPermissions] = await Promise.all([

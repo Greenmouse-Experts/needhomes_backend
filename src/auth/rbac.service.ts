@@ -15,7 +15,7 @@ export class RbacService {
    * @param userId - The user's ID
    * @returns Array of permission keys
    */
-  async getUserPermissions(userId: number): Promise<string[]> {
+  async getUserPermissions(userId: string): Promise<string[]> {
     const userWithRoles = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -56,7 +56,7 @@ export class RbacService {
    * @param userId - The user's ID
    * @returns Array of role names
    */
-  async getUserRoles(userId: number): Promise<string[]> {
+  async getUserRoles(userId: string): Promise<string[]> {
     const userWithRoles = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -80,7 +80,7 @@ export class RbacService {
    * @param userId - The user's ID
    * @param roleName - The role name (e.g., 'USER', 'ADMIN', 'SUPER_ADMIN')
    */
-  async assignRoleToUser(userId: number, roleName: string): Promise<void> {
+  async assignRoleToUser(userId: string, roleName: string): Promise<void> {
     const role = await this.prisma.role.findUnique({
       where: { name: roleName },
     });
@@ -112,7 +112,7 @@ export class RbacService {
    * @param userId - The user's ID
    * @param roleName - The role name
    */
-  async removeRoleFromUser(userId: number, roleName: string): Promise<void> {
+  async removeRoleFromUser(userId: string, roleName: string): Promise<void> {
     const role = await this.prisma.role.findUnique({
       where: { name: roleName },
     });
@@ -141,7 +141,7 @@ export class RbacService {
    * @returns true if user has the permission
    */
   async userHasPermission(
-    userId: number,
+    userId: string,
     permissionKey: string,
   ): Promise<boolean> {
     const permissions = await this.getUserPermissions(userId);
@@ -154,7 +154,7 @@ export class RbacService {
    * @param roleName - The role name
    * @returns true if user has the role
    */
-  async userHasRole(userId: number, roleName: string): Promise<boolean> {
+  async userHasRole(userId: string, roleName: string): Promise<boolean> {
     const roles = await this.getUserRoles(userId);
     return roles.includes(roleName);
   }
