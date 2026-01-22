@@ -259,6 +259,118 @@ export class AuthService {
   }
 
   /**
+   * Request password reset via OTP sent to email
+   */
+  async requestPasswordReset(email: string) {
+    const user = await this.userRepository.findOne({
+      email,
+    });
+
+    // Return generic message to avoid email enumeration
+    if (!user || user.deletedAt) {
+      return {
+        message:
+          'If the account exists, a verification code has been sent to the email provided.',
+      };
+    }
+
+    const otp = this.generateOTP();
+    await this.cacheService.storePasswordResetOTP(email, otp);
+    await this.cacheService.resetPasswordResetOTPAttempts(email);
+
+    await this.emailService.sendPasswordResetOTP(email, otp);
+
+    return {
+      message:
+        'If the account exists, a verification code has been sent to the email provided.',
+      otp: process.env.NODE_ENV === 'dev' ? otp : undefined,
+    };
+  }
+
+  /**
+   * Verify password reset OTP and issue short-lived reset token
+   */
+  async verifyPasswordResetOtp(email: string, otp: string) {
+    const user = await this.userRepository.findOne({ email });
+
+    if (!user || user.deletedAt) {
+      await this.cacheService.incrementPasswordResetOTPAttempts(email);
+      throw new BadRequestException('Invalid or expired OTP');
+    }
+
+    const attempts = await this.cacheService.getPasswordResetOTPAttempts(email);
+    if (attempts >= 5) {
+      throw new BadRequestException(
+        'Too many failed attempts. Please request a new OTP.',
+      );
+    }
+
+    const cachedOTP = await this.cacheService.getPasswordResetOTP(email);
+
+    if (!cachedOTP) {
+      throw new BadRequestException(
+        'OTP expired or not found. Please request a new OTP.',
+      );
+    }
+
+    if (String(cachedOTP) !== String(otp)) {
+      await this.cacheService.incrementPasswordResetOTPAttempts(email);
+      throw new BadRequestException('Invalid OTP');
+    }
+
+    // OTP is valid — clean up and issue reset token
+    await this.cacheService.deletePasswordResetOTP(email);
+    await this.cacheService.resetPasswordResetOTPAttempts(email);
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    await this.cacheService.storePasswordResetToken(resetToken, email);
+
+    return {
+      message: 'OTP verified. Use the reset token to set a new password.',
+      resetToken,
+    };
+  }
+
+  /**
+   * Reset password using verified reset token
+   */
+  async resetPassword(
+    token: string,
+    newPassword: string,
+    confirmPassword: string,
+  ) {
+    if (newPassword !== confirmPassword) {
+      throw new BadRequestException('Passwords do not match');
+    }
+
+    const tokenData = await this.cacheService.getPasswordResetToken(token);
+
+    if (!tokenData) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    const user = await this.userRepository.findOne({ email: tokenData.email });
+
+    if (!user || user.deletedAt) {
+      throw new BadRequestException('Invalid reset token');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await this.userRepository.update({ id: user.id }, { password: hashedPassword });
+
+    // Clean up reset artifacts and active sessions
+    await this.cacheService.deletePasswordResetToken(token);
+    await this.cacheService.deletePasswordResetOTP(tokenData.email);
+    await this.cacheService.resetPasswordResetOTPAttempts(tokenData.email);
+    await this.cacheService.removeAllUserSessions(user.id);
+
+    return {
+      message: 'Password reset successful. Please login with your new credentials.',
+    };
+  }
+
+  /**
    * Get roles and permissions with caching
    */
   private async getRolesAndPermissionsWithCache(
@@ -410,7 +522,7 @@ export class AuthService {
   /**
    * Get all active sessions for a user
    */
-  async getUserSessions(userId: number): Promise<
+  async getUserSessions(userId: string): Promise<
     Array<{
       sessionId: string;
       deviceInfo: any;
@@ -423,7 +535,7 @@ export class AuthService {
   /**
    * Logout from a specific session
    */
-  async logoutSession(userId: number, sessionId: string): Promise<void> {
+  async logoutSession(userId: string, sessionId: string): Promise<void> {
     // Remove session
     await this.cacheService.removeUserSession(userId, sessionId);
 
@@ -435,7 +547,7 @@ export class AuthService {
   /**
    * Logout from all devices
    */
-  async logoutAllSessions(userId: number): Promise<void> {
+  async logoutAllSessions(userId: string): Promise<void> {
     await this.cacheService.removeAllUserSessions(userId);
   }
 }

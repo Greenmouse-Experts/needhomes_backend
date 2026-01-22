@@ -94,6 +94,34 @@ export class EmailService {
     }
   }
 
+  async sendPasswordResetOTP(email: string, otp: string): Promise<void> {
+    try {
+      await this.transporter.sendMail({
+        from: this.fromEmail,
+        to: email,
+        subject: 'Reset Your Password - Verification Code',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">Password Reset Verification</h2>
+            <p>Use the code below to verify your password reset request:</p>
+            <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+              ${otp}
+            </div>
+            <p style="color: #666;">This code will expire in 5 minutes. Do not share it with anyone.</p>
+            <p style="color: #666;">If you didn't request this, you can safely ignore this email.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="color: #999; font-size: 12px;">NeedHomes - Your trusted real estate platform</p>
+          </div>
+        `,
+      });
+
+      this.logger.log(`Password reset OTP sent to ${email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send password reset OTP to ${email}`, error);
+      throw new Error('Failed to send password reset OTP');
+    }
+  }
+
   async sendPasswordResetEmail(
     email: string,
     resetToken: string,

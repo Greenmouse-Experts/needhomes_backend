@@ -183,6 +183,57 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
     await this.delete(key);
   }
 
+  /**
+   * Password reset OTP helpers (separate namespace from email verification)
+   */
+  async storePasswordResetOTP(email: string, otp: string): Promise<void> {
+    const key = `reset:otp:${email}`;
+    await this.set(key, otp, 300);
+  }
+
+  async getPasswordResetOTP(email: string): Promise<string | undefined> {
+    const key = `reset:otp:${email}`;
+    return await this.get<string>(key);
+  }
+
+  async deletePasswordResetOTP(email: string): Promise<void> {
+    const key = `reset:otp:${email}`;
+    await this.delete(key);
+  }
+
+  async incrementPasswordResetOTPAttempts(email: string): Promise<number> {
+    const key = `reset:otp:attempts:${email}`;
+    const attempts = (await this.get<number>(key)) || 0;
+    const newAttempts = attempts + 1;
+    await this.set(key, newAttempts, 900);
+    return newAttempts;
+  }
+
+  async getPasswordResetOTPAttempts(email: string): Promise<number> {
+    const key = `reset:otp:attempts:${email}`;
+    return (await this.get<number>(key)) || 0;
+  }
+
+  async resetPasswordResetOTPAttempts(email: string): Promise<void> {
+    const key = `reset:otp:attempts:${email}`;
+    await this.delete(key);
+  }
+
+  async storePasswordResetToken(token: string, email: string): Promise<void> {
+    const key = `reset:token:${token}`;
+    await this.set(key, { email }, 900);
+  }
+
+  async getPasswordResetToken(token: string): Promise<{ email: string } | undefined> {
+    const key = `reset:token:${token}`;
+    return await this.get<{ email: string }>(key);
+  }
+
+  async deletePasswordResetToken(token: string): Promise<void> {
+    const key = `reset:token:${token}`;
+    await this.delete(key);
+  }
+
   // ========================================
   // Session Management (JWT + Redis)
   // ========================================
@@ -247,7 +298,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   /**
    * Get all active sessions for a user
    */
-  async getUserSessions(userId: number): Promise<any[]> {
+  async getUserSessions(userId: string): Promise<any[]> {
     const key = `sessions:${userId}`;
     return (await this.get<any[]>(key)) || [];
   }
@@ -255,7 +306,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   /**
    * Remove a specific session
    */
-  async removeUserSession(userId: number, sessionId: string): Promise<void> {
+  async removeUserSession(userId: string, sessionId: string): Promise<void> {
     const key = `sessions:${userId}`;
     const sessions = (await this.get<any[]>(key)) || [];
     const filtered = sessions.filter((s) => s.sessionId !== sessionId);
@@ -270,7 +321,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   /**
    * Remove all sessions for a user (logout from all devices)
    */
-  async removeAllUserSessions(userId: number): Promise<void> {
+  async removeAllUserSessions(userId: string): Promise<void> {
     const key = `sessions:${userId}`;
     await this.delete(key);
   }
@@ -278,7 +329,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   /**
    * Check if a session is valid
    */
-  async isSessionValid(userId: number, sessionId: string): Promise<boolean> {
+  async isSessionValid(userId: string, sessionId: string): Promise<boolean> {
     const sessions = await this.getUserSessions(userId);
     return sessions.some((s) => s.sessionId === sessionId);
   }
@@ -287,7 +338,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
    * Update session last active time
    */
   async updateSessionActivity(
-    userId: number,
+    userId: string,
     sessionId: string,
   ): Promise<void> {
     const key = `sessions:${userId}`;

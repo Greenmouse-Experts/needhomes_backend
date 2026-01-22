@@ -53,3 +53,33 @@ export class LoginDto {
 
   
 }
+
+export class ForgotPasswordRequestDto {
+  @IsEmail()
+  @IsNotEmpty({ message: 'Email is required' })
+  email: string;
+}
+
+export class VerifyResetOtpDto {
+  @IsEmail()
+  @IsNotEmpty({ message: 'Email is required' })
+  email: string;
+
+  @IsString()
+  @Matches(/^\d{6}$/, { message: 'OTP must be a 6-digit code' })
+  otp: string;
+}
+
+export class ResetPasswordDto {
+  @IsString()
+  @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  newPassword: string;
+
+  @IsString()
+  @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  confirmPassword: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Reset token is required' })
+  token: string;
+}

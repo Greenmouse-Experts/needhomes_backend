@@ -17,7 +17,13 @@ import { CurrentUser } from './decorators/current-user.decorator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { PermissionsGuard } from './guards/permissions.guard';
 import { RequirePermissions } from './decorators/permissions.decorator';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import {
+  RegisterDto,
+  LoginDto,
+  ForgotPasswordRequestDto,
+  VerifyResetOtpDto,
+  ResetPasswordDto,
+} from './dto/auth.dto';
 import { AssignRoleDto, RemoveRoleDto } from './dto/role.dto';
 import { PermissionKey } from 'app/common';
 
@@ -72,6 +78,34 @@ export class AuthController {
       timestamp: new Date().toISOString(),
     };
     return this.authService.login(loginDto, deviceInfo);
+  }
+
+  /**
+   * Request password reset OTP
+   */
+  @Post('password/forgot')
+  async forgotPassword(@Body() body: ForgotPasswordRequestDto) {
+    return this.authService.requestPasswordReset(body.email);
+  }
+
+  /**
+   * Verify password reset OTP and get reset token
+   */
+  @Post('password/verify-otp')
+  async verifyResetOtp(@Body() body: VerifyResetOtpDto) {
+    return this.authService.verifyPasswordResetOtp(body.email, body.otp);
+  }
+
+  /**
+   * Reset password with reset token
+   */
+  @Post('password/reset')
+  async resetPassword(@Body() body: ResetPasswordDto) {
+    return this.authService.resetPassword(
+      body.token,
+      body.newPassword,
+      body.confirmPassword,
+    );
   }
 
   /**
