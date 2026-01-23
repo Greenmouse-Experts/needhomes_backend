@@ -19,15 +19,15 @@ export class RegisterDto {
   @IsNotEmpty({ message: 'Password is required' })
   password: string;
 
+  @IsOptional()
   @IsString()
   @MinLength(2, { message: 'First name must be at least 2 characters long' })
-  @IsNotEmpty({ message: 'First name is required' })
-  firstName: string;
+  firstName?: string; // Required for INDIVIDUAL, optional for CORPORATE
 
+  @IsOptional()
   @IsString()
   @MinLength(2, { message: 'Last name must be at least 2 characters long' })
-  @IsNotEmpty({ message: 'Last name is required' })
-  lastName: string;
+  lastName?: string; // Required for INDIVIDUAL, optional for CORPORATE
 
   @IsString()
   @IsNotEmpty({ message: 'Phone number is required' })
@@ -38,6 +38,15 @@ export class RegisterDto {
     },
   )
   phone: string;
+
+  @IsEnum(AccountType, { message: 'Account type must be INDIVIDUAL or CORPORATE' })
+  @IsNotEmpty({ message: 'Account type is required' })
+  accountType: AccountType;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(2, { message: 'Company name must be at least 2 characters long' })
+  companyName?: string; // Required for CORPORATE accounts
 
   @IsOptional()
   @IsString()

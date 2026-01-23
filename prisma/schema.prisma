@@ -6,17 +6,17 @@
 
 generator client {
   provider = "prisma-client-js"
-
 }
 
 datasource db {
-  provider = "postgresql"
-
+  provider  = "postgresql"
+ 
 }
 
 enum AccountType {
   INDIVIDUAL
   CORPORATE
+  PARTNER
 }
 
 enum AccountStatus {
@@ -25,7 +25,12 @@ enum AccountStatus {
   INACTIVE
   SUSPENDED
 }
-
+enum PartnerType {
+  REAL_ESTATE_AGENT
+  PROPERTY_DEVELOPER
+  AGENCY
+  OTHER
+}
 enum AccountVerificationStatus {
   PENDING
   VERIFIED
@@ -33,13 +38,14 @@ enum AccountVerificationStatus {
 
 model User {
   id                          String                    @id @default(uuid())
-  firstName                   String
-  lastName                    String
+  firstName                   String?                   // Optional for CORPORATE accounts
+  lastName                    String?                   // Optional for CORPORATE accounts
   email                       String                    @unique
   phone                       String                    @unique
   password                    String
   isEmailVerified             Boolean                   @default(false)
   accountType                 AccountType
+  companyName                 String?                   // Required for CORPORATE accounts
   account_status              AccountStatus             @default(ACTIVE)
   account_verification_status AccountVerificationStatus @default(PENDING)
   referral_source             String?
@@ -99,10 +105,11 @@ model BankAccount {
 
 model Role {
   id          String           @id @default(uuid())
-  name        String           @unique // USER, ADMIN, SUPER_ADMIN
+  name        String           @unique // USER, PARTNER, ADMIN, SUPER_ADMIN
   description String?
   permissions RolePermission[]
   users       UserRole[]
+  partners    PartnerRole[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 }
@@ -131,6 +138,21 @@ model UserRole {
   @@index([roleId])
 }
 
+// Join table: Partner <-> Role (Many-to-Many)
+model PartnerRole {
+  partnerId String
+  roleId    String
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  role    Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now())
+
+  @@id([partnerId, roleId])
+  @@index([partnerId])
+  @@index([roleId])
+}
+
 // Join table: Role <-> Permission (Many-to-Many)
 model RolePermission {
   roleId       String
@@ -144,4 +166,72 @@ model RolePermission {
   @@id([roleId, permissionId])
   @@index([roleId])
   @@index([permissionId])
+}
+
+// ========================================
+// Partner & Referral Models
+// ========================================
+
+model Partner {
+  id                          String                    @id @default(uuid())
+  firstName                   String
+  lastName                    String
+  email                       String                    @unique
+  phone                       String                    @unique
+  password                    String
+  isEmailVerified             Boolean                   @default(false)
+  account_status              AccountStatus             @default(ACTIVE)
+  account_verification_status AccountVerificationStatus @default(PENDING)
+  accountType                 AccountType             @default(PARTNER) 
+  partnerType                PartnerType
+  referralCode                String?                   @unique // Generated only after KYC verification
+  totalReferrals              Int                       @default(0)
+  totalCommission             Float                     @default(0)
+  createdAt                   DateTime                  @default(now())
+  updatedAt                   DateTime                  @updatedAt
+  deletedAt                   DateTime?
+
+  // Relations
+  roles             PartnerRole[]
+  referrals         Referral[]
+  referralClicks    ReferralClick[]
+
+  @@index([email])
+  @@index([phone])
+  @@index([referralCode])
+  @@index([deletedAt])
+  @@index([createdAt])
+}
+
+// Track actual conversions (user signups)
+model Referral {
+  id            String   @id @default(uuid())
+  partnerId     String
+  userId        String? // If user signs up through partner link
+  referralType  String // 'USER_SIGNUP', etc.
+  commission    Float    @default(0) // Commission earned from this referral
+  status        String   @default("PENDING") // PENDING, COMPLETED, PAID
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Track clicks on partner referral links
+model ReferralClick {
+  id           String   @id @default(uuid())
+  partnerId    String
+  ipAddress    String?
+  userAgent    String?
+  clickedAt    DateTime @default(now())
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId])
+  @@index([clickedAt])
 }

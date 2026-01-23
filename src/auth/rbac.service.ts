@@ -158,4 +158,130 @@ export class RbacService {
     const roles = await this.getUserRoles(userId);
     return roles.includes(roleName);
   }
+
+  /**
+   * Get all permissions for a partner by their ID
+   * @param partnerId - The partner's ID
+   * @returns Array of permission keys
+   */
+  async getPartnerPermissions(partnerId: string): Promise<string[]> {
+    const partnerWithRoles = await this.prisma.partner.findUnique({
+      where: { id: partnerId },
+      include: {
+        roles: {
+          include: {
+            role: {
+              include: {
+                permissions: {
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!partnerWithRoles) {
+      return [];
+    }
+
+    // Extract unique permissions from all roles
+    const permissionSet = new Set<string>();
+
+    partnerWithRoles.roles.forEach((partnerRole) => {
+      partnerRole.role.permissions.forEach((rolePermission) => {
+        permissionSet.add(rolePermission.permission.key);
+      });
+    });
+
+    return Array.from(permissionSet);
+  }
+
+  /**
+   * Get all roles for a partner by their ID
+   * @param partnerId - The partner's ID
+   * @returns Array of role names
+   */
+  async getPartnerRoles(partnerId: string): Promise<string[]> {
+    const partnerWithRoles = await this.prisma.partner.findUnique({
+      where: { id: partnerId },
+      include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+
+    if (!partnerWithRoles) {
+      return [];
+    }
+
+    return partnerWithRoles.roles.map((partnerRole) => partnerRole.role.name);
+  }
+
+  /**
+   * Assign a role to a partner
+   * @param partnerId - The partner's ID
+   * @param roleName - The role name (e.g., 'PARTNER')
+   */
+  async assignRoleToPartner(partnerId: string, roleName: string): Promise<void> {
+    const role = await this.prisma.role.findUnique({
+      where: { name: roleName },
+    });
+
+    if (!role) {
+      throw new Error(`Role ${roleName} not found`);
+    }
+
+    await this.prisma.partnerRole.upsert({
+      where: {
+        partnerId_roleId: {
+          partnerId,
+          roleId: role.id,
+        },
+      },
+      create: {
+        partnerId,
+        roleId: role.id,
+      },
+      update: {},
+    });
+
+    // Invalidate cache so new permissions take effect immediately
+    const cacheKey = `partner:${partnerId}`;
+    await this.cacheService.invalidateUserCache(cacheKey);
+  }
+
+  /**
+   * Remove a role from a partner
+   * @param partnerId - The partner's ID
+   * @param roleName - The role name
+   */
+  async removeRoleFromPartner(partnerId: string, roleName: string): Promise<void> {
+    const role = await this.prisma.role.findUnique({
+      where: { name: roleName },
+    });
+
+    if (!role) {
+      throw new Error(`Role ${roleName} not found`);
+    }
+
+    await this.prisma.partnerRole.delete({
+      where: {
+        partnerId_roleId: {
+          partnerId,
+          roleId: role.id,
+        },
+      },
+    });
+
+    // Invalidate cache so permission changes take effect immediately
+    const cacheKey = `partner:${partnerId}`;
+    await this.cacheService.invalidateUserCache(cacheKey);
+  }
 }

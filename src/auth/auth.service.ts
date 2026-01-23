@@ -32,6 +32,21 @@ export class AuthService {
       throw new BadRequestException('Account type must be either INDIVIDUAL or CORPORATE');
     }
 
+    const normalizedAccountType = accountType.toUpperCase() as AccountType;
+
+    // Validate required fields based on account type
+    if (normalizedAccountType === 'INDIVIDUAL') {
+      if (!registerDto.firstName || !registerDto.lastName) {
+        throw new BadRequestException('First name and last name are required for individual accounts');
+      }
+    }
+
+    if (normalizedAccountType === 'CORPORATE') {
+      if (!registerDto.companyName) {
+        throw new BadRequestException('Company name is required for corporate accounts');
+      }
+    }
+
     // Internationalize phone number
     const internationalPhone = internationalisePhoneNumber(registerDto.phone);
 
@@ -57,15 +72,15 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
     // 3. Create user (unverified) - Type-safe with Prisma.UserCreateInput
-    const normalizedAccountType = accountType.toUpperCase();
     const userData: Prisma.UserCreateInput = {
       email: registerDto.email,
       password: hashedPassword,
-      firstName: registerDto.firstName,
-      lastName: registerDto.lastName,
+      firstName: registerDto.firstName || null,
+      lastName: registerDto.lastName || null,
       phone: internationalPhone,
-      accountType: normalizedAccountType as AccountType,
+      accountType: normalizedAccountType,
       isEmailVerified: false,
+      ...(registerDto.companyName && { companyName: registerDto.companyName }),
       ...(registerDto.referral_source && { referral_source: registerDto.referral_source }),
     };
 
@@ -88,6 +103,7 @@ export class AuthService {
       message: 'Registration successful. Please verify your email with the OTP sent.',
       email: user.email,
       userId: user.id,
+      accountType: user.accountType,
       // For development only - remove in production:
       otp: process.env.NODE_ENV === 'dev' ? otp : undefined,
     };
@@ -197,7 +213,10 @@ export class AuthService {
     await this.cacheService.resetOTPAttempts(email);
 
     // Send welcome email
-    await this.emailService.sendWelcomeEmail(user.email, user.firstName);
+  const displayName = user.accountType === 'CORPORATE' 
+  ? user.companyName || 'need homes user'
+: user.firstName || 'need homes user';
+  await this.emailService.sendWelcomeEmail(user.email, displayName);
 
     // 6. Get roles and permissions for JWT
     const [roles, permissions] = await this.getRolesAndPermissionsWithCache(user.id);

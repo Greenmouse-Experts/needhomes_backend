@@ -37,6 +37,16 @@ export enum PermissionKey {
   ROLE_DELETE = 'role.delete',
   ROLE_ASSIGN = 'role.assign',
 
+  // Referral permissions (for partners)
+  REFERRAL_CREATE_OWN = 'referral.create_own',
+  REFERRAL_READ_OWN = 'referral.read_own',
+  REFERRAL_UPDATE_OWN = 'referral.update_own',
+  REFERRAL_DELETE_OWN = 'referral.delete_own',
+  REFERRAL_READ_ALL = 'referral.read_all',
+  REFERRAL_UPDATE_ALL = 'referral.update_all',
+  REFERRAL_DELETE_ALL = 'referral.delete_all',
+  REFERRAL_MANAGE_COMMISSION = 'referral.manage_commission',
+
   // System permissions
   SYSTEM_MANAGE = 'system.manage',
   AUDIT_READ = 'audit.read',
@@ -48,6 +58,7 @@ export enum PermissionKey {
 
 export enum RoleName {
   USER = 'USER',
+  PARTNER = 'PARTNER',
   ADMIN = 'ADMIN',
   SUPER_ADMIN = 'SUPER_ADMIN',
 }
@@ -71,6 +82,22 @@ export const ROLE_PERMISSIONS: Record<RoleName, PermissionKey[]> = {
     PermissionKey.BANK_DELETE_OWN,
   ],
 
+  [RoleName.PARTNER]: [
+    // Partners can manage their own profile
+    PermissionKey.USER_READ_OWN,
+    PermissionKey.USER_UPDATE_OWN,
+    
+    // Partners can manage their verification documents
+    PermissionKey.VERIFICATION_CREATE_OWN,
+    PermissionKey.VERIFICATION_READ_OWN,
+    PermissionKey.VERIFICATION_UPDATE_OWN,
+    
+    // Partners can manage referrals and view analytics
+    PermissionKey.REFERRAL_CREATE_OWN,
+    PermissionKey.REFERRAL_READ_OWN,
+    PermissionKey.REFERRAL_UPDATE_OWN,
+  ],
+
   [RoleName.ADMIN]: [
     // Admins can manage all users and resources
     PermissionKey.USER_CREATE_ALL,
@@ -81,6 +108,11 @@ export const ROLE_PERMISSIONS: Record<RoleName, PermissionKey[]> = {
     PermissionKey.VERIFICATION_REJECT_ALL,
     PermissionKey.BANK_READ_ALL,
     PermissionKey.BANK_DELETE_ALL,
+    // Referral permissions for admins (all resources)
+    PermissionKey.REFERRAL_READ_ALL,
+    PermissionKey.REFERRAL_UPDATE_ALL,
+    PermissionKey.REFERRAL_DELETE_ALL,
+    PermissionKey.REFERRAL_MANAGE_COMMISSION,
     PermissionKey.AUDIT_READ,
   ],
 
@@ -125,6 +157,14 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionKey, string> = {
   [PermissionKey.ROLE_DELETE]: 'Delete roles',
   [PermissionKey.ROLE_ASSIGN]: 'Assign roles to users',
 
+  [PermissionKey.REFERRAL_CREATE_OWN]: 'Create own referrals',
+  [PermissionKey.REFERRAL_READ_OWN]: 'View own referrals and commission',
+  [PermissionKey.REFERRAL_UPDATE_OWN]: 'Update own referrals',
+  [PermissionKey.REFERRAL_DELETE_OWN]: 'Delete own referrals',
+  [PermissionKey.REFERRAL_READ_ALL]: 'View all referrals',
+  [PermissionKey.REFERRAL_UPDATE_ALL]: 'Update any referral',
+  [PermissionKey.REFERRAL_DELETE_ALL]: 'Delete any referral',
+  [PermissionKey.REFERRAL_MANAGE_COMMISSION]: 'Manage referral commissions',
   [PermissionKey.SYSTEM_MANAGE]: 'Manage system settings',
   [PermissionKey.AUDIT_READ]: 'View audit logs',
 };
@@ -135,6 +175,7 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionKey, string> = {
 
 export const ROLE_DESCRIPTIONS: Record<RoleName, string> = {
   [RoleName.USER]: 'Standard user with access to own resources only',
+  [RoleName.PARTNER]: 'Partner with access to referral management and analytics',
   [RoleName.ADMIN]:
     'Administrator with full access to manage users and resources',
   [RoleName.SUPER_ADMIN]:

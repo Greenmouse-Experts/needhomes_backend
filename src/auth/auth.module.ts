@@ -39,6 +39,12 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     PermissionsGuard,
     JwtAuthGuard,
   ],
-  exports: [AuthService, RbacService, PermissionsGuard, JwtAuthGuard],
+  exports: [
+    AuthService,
+    RbacService,
+    PermissionsGuard,
+    JwtAuthGuard,
+    JwtModule, // Export JwtModule so PartnerService can use JwtService
+  ],
 })
 export class AuthModule {}

@@ -11,7 +11,7 @@ import {
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: process.env.DIRECT_URL || process.env.DATABASE_URL,
   }),
 });
 
@@ -92,6 +92,7 @@ async function seedRolesAndPermissions() {
     console.log(`   - Roles: ${roles.length}`);
     console.log(`   - Permissions: ${permissions.length}`);
     console.log(`   - USER role: ${ROLE_PERMISSIONS[RoleName.USER].length} permissions`);
+    console.log(`   - PARTNER role: ${ROLE_PERMISSIONS[RoleName.PARTNER].length} permissions`);
     console.log(`   - ADMIN role: ${ROLE_PERMISSIONS[RoleName.ADMIN].length} permissions`);
     console.log(`   - SUPER_ADMIN role: ${ROLE_PERMISSIONS[RoleName.SUPER_ADMIN].length} permissions`);
   } catch (error) {
