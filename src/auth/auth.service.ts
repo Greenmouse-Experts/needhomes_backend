@@ -139,8 +139,13 @@ export class AuthService {
 
     // 4. Check email verification
     if (!user.isEmailVerified) {
+      // Generate and send new OTP
+      const otp = this.generateOTP();
+      await this.cacheService.storeOTP(user.email, otp);
+      await this.emailService.sendOTP(user.email, otp);
+      
       throw new ForbiddenException(
-        'Please verify your email before logging in.',
+        'Email not verified. A new verification code has been sent to your email.',
       );
     }
 
