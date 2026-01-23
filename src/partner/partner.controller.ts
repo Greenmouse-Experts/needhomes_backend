@@ -62,6 +62,41 @@ export class PartnerController {
     return this.partnerService.login(dto, deviceInfo);
   }
 
+  // ========================================
+  // Password Reset
+  // ========================================
+
+  /**
+   * Request password reset OTP
+   */
+  @Post('password/forgot')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() body: { email: string }) {
+    return this.partnerService.requestPasswordReset(body.email);
+  }
+
+  /**
+   * Verify password reset OTP and get reset token
+   */
+  @Post('password/verify-otp')
+  @HttpCode(HttpStatus.OK)
+  async verifyResetOtp(@Body() body: { email: string; otp: string }) {
+    return this.partnerService.verifyPasswordResetOtp(body.email, body.otp);
+  }
+
+  /**
+   * Reset password with reset token
+   */
+  @Post('password/reset')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Body() body: { token: string; newPassword: string; confirmPassword: string }) {
+    return this.partnerService.resetPassword(
+      body.token,
+      body.newPassword,
+      body.confirmPassword,
+    );
+  }
+
   // Protected routes (require authentication + partner type)
   @UseGuards(JwtAuthGuard, PartnerOnlyGuard, PermissionsGuard)
   @RequirePermissions(PermissionKey.USER_READ_OWN)
