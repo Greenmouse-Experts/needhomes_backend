@@ -10,7 +10,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: '*',
+    origin: ['https://needhomes.netlify.app', 'http://localhost:3000', 'http://localhost:3001'], // Specify exact origins
+    credentials: true, // Now this works with specific origins
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
       'Content-Type',
