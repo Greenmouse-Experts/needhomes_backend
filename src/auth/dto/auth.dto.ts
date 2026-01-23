@@ -39,9 +39,7 @@ export class RegisterDto {
   )
   phone: string;
 
-  @IsEnum(AccountType, { message: 'Account type must be INDIVIDUAL or CORPORATE' })
-  @IsNotEmpty({ message: 'Account type is required' })
-  accountType: AccountType;
+
 
   @IsOptional()
   @IsString()
