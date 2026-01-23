@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RbacService } from './rbac.service';
@@ -139,8 +139,8 @@ export class AuthService {
 
     // 4. Check email verification
     if (!user.isEmailVerified) {
-      throw new UnauthorizedException(
-        'Please verify your email before logging in. Check your inbox for the OTP.',
+      throw new ForbiddenException(
+        'Please verify your email before logging in.',
       );
     }
 
@@ -284,6 +284,13 @@ export class AuthService {
     const user = await this.userRepository.findOne({
       email,
     });
+
+    if (!user.isEmailVerified) {
+      throw new ForbiddenException(
+        'Please verify your email before resetting your password.',
+      );
+    }
+
 
     // Return generic message to avoid email enumeration
     if (!user || user.deletedAt) {
