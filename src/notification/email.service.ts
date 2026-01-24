@@ -24,6 +24,7 @@ export class EmailService {
         subject: 'Verify Your Email - NeedHomes',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <img src="https://res.cloudinary.com/greenmouse-tech/image/upload/v1769280317/needhomes/WhatsApp_Image_2026-01-23_at_13.26.53_xxxz5p.jpg" alt="NeedHomes Logo" style="max-width: 200px; height: auto; display: block; margin: 0 auto 20px;">
             <h2 style="color: #333;">Email Verification</h2>
             <p>Your verification code is:</p>
             <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
@@ -52,6 +53,7 @@ export class EmailService {
         subject: 'Email Verified - Complete Your KYC | NeedHomes',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <img src="https://res.cloudinary.com/greenmouse-tech/image/upload/v1769280317/needhomes/WhatsApp_Image_2026-01-23_at_13.26.53_xxxz5p.jpg" alt="NeedHomes Logo" style="max-width: 200px; height: auto; display: block; margin: 0 auto 20px;">
             <h2 style="color: #333;">Email Verified Successfully!</h2>
             <p>Hi ${firstName},</p>
             <p>Your email has been successfully verified. Welcome to NeedHomes!</p>
@@ -102,6 +104,7 @@ export class EmailService {
         subject: 'Reset Your Password - Verification Code',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <img src="https://res.cloudinary.com/greenmouse-tech/image/upload/v1769280317/needhomes/WhatsApp_Image_2026-01-23_at_13.26.53_xxxz5p.jpg" alt="NeedHomes Logo" style="max-width: 200px; height: auto; display: block; margin: 0 auto 20px;">
             <h2 style="color: #333;">Password Reset Verification</h2>
             <p>Use the code below to verify your password reset request:</p>
             <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
@@ -135,6 +138,7 @@ export class EmailService {
         subject: 'Reset Your Password - NeedHomes',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <img src="https://res.cloudinary.com/greenmouse-tech/image/upload/v1769280317/needhomes/WhatsApp_Image_2026-01-23_at_13.26.53_xxxz5p.jpg" alt="NeedHomes Logo" style="max-width: 200px; height: auto; display: block; margin: 0 auto 20px;">
             <h2 style="color: #333;">Password Reset Request</h2>
             <p>You requested to reset your password. Click the button below to proceed:</p>
             <div style="text-align: center; margin: 30px 0;">

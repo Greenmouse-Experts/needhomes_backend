@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { CacheModule } from './cache/cache.module';
 import { NotificationModule } from './notification/notification.module';
+import { MultimediaModule } from './multimedia/multiimedia.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { NotificationModule } from './notification/notification.module';
     AuthModule,
     UserModule,
     PartnerModule,
+    MultimediaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

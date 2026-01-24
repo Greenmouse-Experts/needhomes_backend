@@ -10,8 +10,9 @@ export class CloudinaryService {
 
   async uploadFile(
     file: Express.Multer.File,
-    folder = 'needhome-uploads',
+    userId: string,
   ): Promise<{ url: string; publicId: string }> {
+    const folder = `needhomes/${userId}`;
     return new Promise((resolve, reject) => {
       const uploadStream = this.cloudinary.uploader.upload_stream(
         { folder },
