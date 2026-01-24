@@ -8,4 +8,4 @@
 -- AlterTable
 ALTER TABLE "Partner" ADD COLUMN     "partnerType" "PartnerType" NOT NULL,
 DROP COLUMN "accountType",
-ADD COLUMN     "accountType" "AccountType" NOT NULL DEFAULT 'PARTNER';
+ADD COLUMN     "accountType" "AccountType";

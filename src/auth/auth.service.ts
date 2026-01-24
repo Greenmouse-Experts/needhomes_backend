@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RbacService } from './rbac.service';
@@ -290,7 +290,11 @@ export class AuthService {
       email,
     });
 
-    if (!user.isEmailVerified) {
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.isEmailVerified) {
       throw new ForbiddenException(
         'Please verify your email before resetting your password.',
       );

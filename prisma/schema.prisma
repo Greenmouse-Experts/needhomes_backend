@@ -36,6 +36,11 @@ enum AccountVerificationStatus {
   VERIFIED
 }
 
+enum VerificationType {
+  INDIVIDUAL
+  CORPORATE
+}
+
 model User {
   id                          String                    @id @default(uuid())
   firstName                   String?                   // Optional for CORPORATE accounts
