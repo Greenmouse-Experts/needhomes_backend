@@ -9,8 +9,7 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
- 
+  provider = "postgresql"
 }
 
 enum AccountType {
@@ -25,12 +24,14 @@ enum AccountStatus {
   INACTIVE
   SUSPENDED
 }
+
 enum PartnerType {
   REAL_ESTATE_AGENT
   PROPERTY_DEVELOPER
   AGENCY
   OTHER
 }
+
 enum AccountVerificationStatus {
   PENDING
   VERIFIED
@@ -39,18 +40,20 @@ enum AccountVerificationStatus {
 enum VerificationType {
   INDIVIDUAL
   CORPORATE
+  PARTNER
 }
 
 model User {
   id                          String                    @id @default(uuid())
-  firstName                   String?                   // Optional for CORPORATE accounts
-  lastName                    String?                   // Optional for CORPORATE accounts
+  profilePicture              String?
+  firstName                   String? // Optional for CORPORATE accounts
+  lastName                    String? // Optional for CORPORATE accounts
   email                       String                    @unique
   phone                       String                    @unique
   password                    String
   isEmailVerified             Boolean                   @default(false)
   accountType                 AccountType
-  companyName                 String?                   // Required for CORPORATE accounts
+  companyName                 String? // Required for CORPORATE accounts
   account_status              AccountStatus             @default(ACTIVE)
   account_verification_status AccountVerificationStatus @default(PENDING)
   referral_source             String?
@@ -70,17 +73,24 @@ model User {
 }
 
 model VerificationDocument {
-  id              String    @id @default(uuid())
-  user_id         String    @unique
-  idType          String
-  document        String
-  frontPage       String
-  backPage        String?
-  submitedAt      DateTime  @default(now())
-  RejectionReason String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  deletedAt       DateTime?
+  id               String           @id @default(uuid())
+  user_id          String           @unique
+  idType           String?
+  frontPage        String?
+  companyName      String?
+  rcNumber         String?
+  cacDocument      String?
+  backPage         String?
+  authorizedId     String?
+  authorizedName   String?
+  utilityBill      String?
+  address          String?
+  verificationType VerificationType
+  submitedAt       DateTime         @default(now())
+  RejectionReason  String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  deletedAt        DateTime?
 
   user User @relation("UserVerification", fields: [user_id], references: [id])
 
@@ -187,8 +197,8 @@ model Partner {
   isEmailVerified             Boolean                   @default(false)
   account_status              AccountStatus             @default(ACTIVE)
   account_verification_status AccountVerificationStatus @default(PENDING)
-  accountType                 AccountType             @default(PARTNER) 
-  partnerType                PartnerType
+  accountType                 AccountType               @default(PARTNER)
+  partnerType                 PartnerType
   referralCode                String?                   @unique // Generated only after KYC verification
   totalReferrals              Int                       @default(0)
   totalCommission             Float                     @default(0)
@@ -197,9 +207,9 @@ model Partner {
   deletedAt                   DateTime?
 
   // Relations
-  roles             PartnerRole[]
-  referrals         Referral[]
-  referralClicks    ReferralClick[]
+  roles          PartnerRole[]
+  referrals      Referral[]
+  referralClicks ReferralClick[]
 
   @@index([email])
   @@index([phone])
@@ -210,14 +220,14 @@ model Partner {
 
 // Track actual conversions (user signups)
 model Referral {
-  id            String   @id @default(uuid())
-  partnerId     String
-  userId        String? // If user signs up through partner link
-  referralType  String // 'USER_SIGNUP', etc.
-  commission    Float    @default(0) // Commission earned from this referral
-  status        String   @default("PENDING") // PENDING, COMPLETED, PAID
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(uuid())
+  partnerId    String
+  userId       String? // If user signs up through partner link
+  referralType String // 'USER_SIGNUP', etc.
+  commission   Float    @default(0) // Commission earned from this referral
+  status       String   @default("PENDING") // PENDING, COMPLETED, PAID
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
 
@@ -229,11 +239,11 @@ model Referral {
 
 // Track clicks on partner referral links
 model ReferralClick {
-  id           String   @id @default(uuid())
-  partnerId    String
-  ipAddress    String?
-  userAgent    String?
-  clickedAt    DateTime @default(now())
+  id        String   @id @default(uuid())
+  partnerId String
+  ipAddress String?
+  userAgent String?
+  clickedAt DateTime @default(now())
 
   partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
 

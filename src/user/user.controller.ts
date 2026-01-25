@@ -36,6 +36,12 @@ export class UserController {
     return this.userService.findOne(userId);
   }
 
+  @Post('profile-picture')
+  @RequirePermissions(PermissionKey.USER_UPDATE_OWN)
+  uploadProfilePicture(@CurrentUser('id') userId: string, @Body('profilePicture') profilePicture: string) {
+    return this.userService.update(userId, { profilePicture });
+  }
+
   /**
    * Update own profile
    * Permission: user.update_own
@@ -58,6 +64,8 @@ export class UserController {
   deleteMyAccount(@CurrentUser('id') userId: string) {
     return this.userService.softDelete(userId);
   }
+
+
 
   // ========================================
   // ADMIN Routes (all resources)

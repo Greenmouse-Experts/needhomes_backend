@@ -9,6 +9,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { CacheModule } from './cache/cache.module';
 import { NotificationModule } from './notification/notification.module';
 import { MultimediaModule } from './multimedia/multiimedia.module';
+import { VerificationModule } from './verification/verification.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { MultimediaModule } from './multimedia/multiimedia.module';
     UserModule,
     PartnerModule,
     MultimediaModule,
+    VerificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

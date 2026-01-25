@@ -12,6 +12,10 @@ export class UpdateUserDto {
   lastName?: string;
 
   @IsOptional()
+  @IsString()
+  profilePicture?: string;
+
+  @IsOptional()
   @IsEmail()
   email?: string;
 
@@ -23,3 +27,5 @@ export class UpdateUserDto {
   @IsString()
   referral_source?: string;
 }
+
+
