@@ -46,4 +46,13 @@ export class VerificationRepository {
       bank: userWithRelations.bank_account || null,
     };
   }
+
+  async getAllVerifications() {
+    const docs = await this.prisma.verificationDocument.findMany({
+      orderBy: { submitedAt: 'desc' },
+      include: { user: { include: { bank_account: true } } },
+    });
+
+    return docs
+  }
 }
