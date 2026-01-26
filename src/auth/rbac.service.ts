@@ -161,14 +161,14 @@ export class RbacService {
 
   /**
    * Get all permissions for a partner by their ID
-   * @param partnerId - The partner's ID
+   * @param partnerId - The partner's ID (User with accountType=PARTNER)
    * @returns Array of permission keys
    */
   async getPartnerPermissions(partnerId: string): Promise<string[]> {
-    const partnerWithRoles = await this.prisma.partner.findUnique({
-      where: { id: partnerId },
+    const partnerWithRoles = await this.prisma.user.findUnique({
+      where: { id: partnerId, accountType: 'PARTNER' },
       include: {
-        roles: {
+        partnerRoles: {
           include: {
             role: {
               include: {
@@ -191,7 +191,7 @@ export class RbacService {
     // Extract unique permissions from all roles
     const permissionSet = new Set<string>();
 
-    partnerWithRoles.roles.forEach((partnerRole) => {
+    partnerWithRoles.partnerRoles.forEach((partnerRole) => {
       partnerRole.role.permissions.forEach((rolePermission) => {
         permissionSet.add(rolePermission.permission.key);
       });
@@ -202,14 +202,14 @@ export class RbacService {
 
   /**
    * Get all roles for a partner by their ID
-   * @param partnerId - The partner's ID
+   * @param partnerId - The partner's ID (User with accountType=PARTNER)
    * @returns Array of role names
    */
   async getPartnerRoles(partnerId: string): Promise<string[]> {
-    const partnerWithRoles = await this.prisma.partner.findUnique({
-      where: { id: partnerId },
+    const partnerWithRoles = await this.prisma.user.findUnique({
+      where: { id: partnerId, accountType: 'PARTNER' },
       include: {
-        roles: {
+        partnerRoles: {
           include: {
             role: true,
           },
@@ -221,12 +221,12 @@ export class RbacService {
       return [];
     }
 
-    return partnerWithRoles.roles.map((partnerRole) => partnerRole.role.name);
+    return partnerWithRoles.partnerRoles.map((partnerRole) => partnerRole.role.name);
   }
 
   /**
    * Assign a role to a partner
-   * @param partnerId - The partner's ID
+   * @param partnerId - The partner's ID (User with accountType=PARTNER)
    * @param roleName - The role name (e.g., 'PARTNER')
    */
   async assignRoleToPartner(partnerId: string, roleName: string): Promise<void> {
@@ -240,13 +240,13 @@ export class RbacService {
 
     await this.prisma.partnerRole.upsert({
       where: {
-        partnerId_roleId: {
-          partnerId,
+        userId_roleId: {
+          userId: partnerId,
           roleId: role.id,
         },
       },
       create: {
-        partnerId,
+        userId: partnerId,
         roleId: role.id,
       },
       update: {},
@@ -259,7 +259,7 @@ export class RbacService {
 
   /**
    * Remove a role from a partner
-   * @param partnerId - The partner's ID
+   * @param partnerId - The partner's ID (User with accountType=PARTNER)
    * @param roleName - The role name
    */
   async removeRoleFromPartner(partnerId: string, roleName: string): Promise<void> {
@@ -273,8 +273,8 @@ export class RbacService {
 
     await this.prisma.partnerRole.delete({
       where: {
-        partnerId_roleId: {
-          partnerId,
+        userId_roleId: {
+          userId: partnerId,
           roleId: role.id,
         },
       },

@@ -21,6 +21,7 @@ import { RoleName } from '../../libs/common/src/constants/permissions.constant';
 import { PrismaService } from '../prisma/prisma.service';
 import { internationalisePhoneNumber } from 'app/common/utils/phonenumber.utils';
 import { RbacService } from '../auth/rbac.service';
+import { AuthService } from '../auth/auth.service';
 import { AccountType } from '@prisma/client';
 
 
@@ -33,6 +34,7 @@ export class PartnerService {
     private emailService: EmailService,
     private prisma: PrismaService,
     private rbacService: RbacService,
+    private authService: AuthService,
   ) {}
 
   /**
@@ -93,6 +95,7 @@ export class PartnerService {
       email: dto.email,
       phone: phoneNumber,
       password: hashedPassword,
+      accountType: AccountType.PARTNER, // Set accountType to PARTNER
       partnerType: dto.partnerType,
     });
 
@@ -104,7 +107,7 @@ export class PartnerService {
     if (partnerRole) {
       await this.prisma.partnerRole.create({
         data: {
-          partnerId: partner.id,
+          userId: partner.id,
           roleId: partnerRole.id,
         },
       });
@@ -149,7 +152,10 @@ export class PartnerService {
     await this.cacheService.delete(cacheKey);
 
     // Send welcome email
-    await this.emailService.sendWelcomeEmail(partner.email, partner.firstName);
+    await this.emailService.sendWelcomeEmail(
+      partner.email,
+      partner.firstName || 'Partner'
+    );
 
     // Get roles and permissions
     const [roles, permissions] = await this.getPartnerRolesAndPermissionsWithCache(partner.id);
@@ -351,213 +357,10 @@ export class PartnerService {
   }
 
   /**
-   * Refresh access token using refresh token
-   */
-  async refreshAccessToken(
-    refreshToken: string,
-    newDeviceInfo?: any,
-  ): Promise<{
-    accessToken: string;
-    refreshToken: string;
-  }> {
-    // Validate refresh token and get session info
-    const sessionData = await this.cacheService.getRefreshToken(refreshToken);
-
-    if (!sessionData) {
-      throw new UnauthorizedException('Invalid refresh token');
-    }
-
-    const { userId: partnerId, sessionId, deviceInfo } = sessionData;
-
-    // Check if partner still exists
-    const partner = await this.partnerRepository.findById(partnerId);
-
-    if (!partner || !partner.isEmailVerified) {
-      throw new UnauthorizedException('Partner not found or not verified');
-    }
-
-    // Get fresh roles and permissions
-    const [roles, permissions] = await this.getPartnerRolesAndPermissionsWithCache(partnerId);
-
-    // Generate new tokens with same session
-    const newAccessToken = this.jwtService.sign(
-      {
-        sub: partnerId,
-        email: partner.email,
-        type: 'partner',
-        roles,
-        permissions,
-        sessionId,
-      },
-      { expiresIn: '1h' },
-    );
-
-    // Generate new refresh token
-    const newRefreshToken = crypto.randomBytes(32).toString('hex');
-
-    // Delete old refresh token
-    await this.cacheService.deleteRefreshToken(refreshToken);
-
-    // Store new refresh token
-    await this.cacheService.storeRefreshToken(
-      newRefreshToken,
-      partnerId,
-      sessionId,
-      newDeviceInfo || deviceInfo,
-    );
-
-    return {
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
-    };
-  }
-
-  /**
-   * Get all active sessions for a partner
-   */
-  async getPartnerSessions(partnerId: string): Promise<
-    Array<{
-      sessionId: string;
-      deviceInfo: any;
-      createdAt: Date;
-    }>
-  > {
-    return this.cacheService.getUserSessions(partnerId);
-  }
-
-  /**
-   * Logout from a specific session
-   */
-  async logoutSession(partnerId: string, sessionId: string): Promise<void> {
-    await this.cacheService.removeUserSession(partnerId, sessionId);
-  }
-
-  /**
-   * Logout from all devices
-   */
-  async logoutAllSessions(partnerId: string): Promise<void> {
-    await this.cacheService.removeAllUserSessions(partnerId);
-  }
-
-  /**
    * Generate 6-digit OTP
    */
   private generateOTP(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
-  }
-
-  // ========================================
-  // Password Reset
-  // ========================================
-
-  /**
-   * Request password reset via OTP sent to email
-   */
-  async requestPasswordReset(email: string) {
-    const partner = await this.partnerRepository.findByEmail(email);
-
-    // Return generic message to avoid email enumeration
-    if (!partner || partner.deletedAt) {
-      return {
-        message:
-          'If the account exists, a verification code has been sent to the email provided.',
-      };
-    }
-
-    const otp = this.generateOTP();
-    await this.cacheService.storePasswordResetOTP(email, otp);
-    await this.cacheService.resetPasswordResetOTPAttempts(email);
-
-    await this.emailService.sendPasswordResetOTP(email, otp);
-
-    return {
-      message:
-        'If the account exists, a verification code has been sent to the email provided.',
-      otp: process.env.NODE_ENV === 'dev' ? otp : undefined,
-    };
-  }
-
-  /**
-   * Verify password reset OTP and issue short-lived reset token
-   */
-  async verifyPasswordResetOtp(email: string, otp: string) {
-    const partner = await this.partnerRepository.findByEmail(email);
-
-    if (!partner || partner.deletedAt) {
-      await this.cacheService.incrementPasswordResetOTPAttempts(email);
-      throw new BadRequestException('Invalid or expired OTP');
-    }
-
-    const attempts = await this.cacheService.getPasswordResetOTPAttempts(email);
-    if (attempts >= 5) {
-      throw new BadRequestException(
-        'Too many failed attempts. Please request a new OTP.',
-      );
-    }
-
-    const cachedOTP = await this.cacheService.getPasswordResetOTP(email);
-
-    if (!cachedOTP) {
-      throw new BadRequestException(
-        'OTP expired or not found. Please request a new OTP.',
-      );
-    }
-
-    if (String(cachedOTP) !== String(otp)) {
-      await this.cacheService.incrementPasswordResetOTPAttempts(email);
-      throw new BadRequestException('Invalid OTP');
-    }
-
-    // OTP is valid — clean up and issue reset token
-    await this.cacheService.deletePasswordResetOTP(email);
-    await this.cacheService.resetPasswordResetOTPAttempts(email);
-
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    await this.cacheService.storePasswordResetToken(resetToken, email);
-
-    return {
-      message: 'OTP verified. Use the reset token to set a new password.',
-      resetToken,
-    };
-  }
-
-  /**
-   * Reset password using verified reset token
-   */
-  async resetPassword(
-    token: string,
-    newPassword: string,
-    confirmPassword: string,
-  ) {
-    if (newPassword !== confirmPassword) {
-      throw new BadRequestException('Passwords do not match');
-    }
-
-    const tokenData = await this.cacheService.getPasswordResetToken(token);
-
-    if (!tokenData) {
-      throw new BadRequestException('Invalid or expired reset token');
-    }
-
-    const partner = await this.partnerRepository.findByEmail(tokenData.email);
-
-    if (!partner || partner.deletedAt) {
-      throw new BadRequestException('Invalid reset token');
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    await this.partnerRepository.update(partner.id, { password: hashedPassword });
-
-    // Clean up reset artifacts and active sessions
-    await this.cacheService.deletePasswordResetToken(token);
-    await this.cacheService.deletePasswordResetOTP(tokenData.email);
-    await this.cacheService.resetPasswordResetOTPAttempts(tokenData.email);
-    await this.cacheService.removeAllUserSessions(partner.id);
-
-    return {
-      message: 'Password reset successful. Please login with your new credentials.',
-    };
   }
 
   /**
@@ -606,8 +409,8 @@ export class PartnerService {
 
     // Generate unique referral code
     const referralCode = await this.generateUniqueReferralCode(
-      partner.firstName,
-      partner.lastName,
+      partner.firstName || 'Partner',
+      partner.lastName || 'User',
     );
 
     // Update partner with referral code

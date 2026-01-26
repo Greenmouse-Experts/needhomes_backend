@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { PartnerService } from './partner.service';
+import { AuthService } from '../auth/auth.service';
 import {
   RegisterPartnerDto,
   LoginPartnerDto,
@@ -26,7 +27,10 @@ import { PermissionsGuard } from 'src/auth/guards/permissions.guard';
 
 @Controller('partners')
 export class PartnerController {
-  constructor(private readonly partnerService: PartnerService) {}
+  constructor(
+    private readonly partnerService: PartnerService,
+    private readonly authService: AuthService,
+  ) {}
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
@@ -72,7 +76,7 @@ export class PartnerController {
   @Post('password/forgot')
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() body: { email: string }) {
-    return this.partnerService.requestPasswordReset(body.email);
+    return this.authService.requestPasswordReset(body.email, 'PARTNER');
   }
 
   /**
@@ -81,7 +85,7 @@ export class PartnerController {
   @Post('password/verify-otp')
   @HttpCode(HttpStatus.OK)
   async verifyResetOtp(@Body() body: { email: string; otp: string }) {
-    return this.partnerService.verifyPasswordResetOtp(body.email, body.otp);
+    return this.authService.verifyPasswordResetOtp(body.email, body.otp, 'PARTNER');
   }
 
   /**
@@ -90,7 +94,7 @@ export class PartnerController {
   @Post('password/reset')
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() body: { token: string; newPassword: string; confirmPassword: string }) {
-    return this.partnerService.resetPassword(
+    return this.authService.resetPassword(
       body.token,
       body.newPassword,
       body.confirmPassword,
@@ -119,7 +123,7 @@ export class PartnerController {
       userAgent: req.headers['user-agent'],
       timestamp: new Date().toISOString(),
     };
-    return this.partnerService.refreshAccessToken(body.refreshToken, deviceInfo);
+    return this.authService.refreshAccessToken(body.refreshToken, deviceInfo);
   }
 
   /**
@@ -128,7 +132,7 @@ export class PartnerController {
   @Get('sessions')
   @UseGuards(JwtAuthGuard, PartnerOnlyGuard)
   async getSessions(@CurrentPartner() partner: AuthPartner) {
-    const sessions = await this.partnerService.getPartnerSessions(partner.id);
+    const sessions = await this.authService.getUserSessions(partner.id);
     return {
       partnerId: partner.id,
       sessions,
@@ -144,7 +148,7 @@ export class PartnerController {
     @CurrentPartner() partner: AuthPartner,
     @Param('sessionId') sessionId: string,
   ) {
-    await this.partnerService.logoutSession(partner.id, sessionId);
+    await this.authService.logoutSession(partner.id, sessionId);
     return {
       message: 'Session logged out successfully',
     };
@@ -156,7 +160,7 @@ export class PartnerController {
   @Delete('sessions')
   @UseGuards(JwtAuthGuard, PartnerOnlyGuard)
   async logoutAllSessions(@CurrentPartner() partner: AuthPartner) {
-    await this.partnerService.logoutAllSessions(partner.id);
+    await this.authService.logoutAllSessions(partner.id);
     return {
       message: 'Logged out from all devices successfully',
     };

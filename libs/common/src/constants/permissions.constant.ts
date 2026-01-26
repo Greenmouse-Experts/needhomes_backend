@@ -91,6 +91,12 @@ export const ROLE_PERMISSIONS: Record<RoleName, PermissionKey[]> = {
     PermissionKey.VERIFICATION_CREATE_OWN,
     PermissionKey.VERIFICATION_READ_OWN,
     PermissionKey.VERIFICATION_UPDATE_OWN,
+
+    //Prtners can manage their bank accounts
+    PermissionKey.BANK_CREATE_OWN,
+    PermissionKey.BANK_READ_OWN,
+    PermissionKey.BANK_UPDATE_OWN,
+    PermissionKey.BANK_DELETE_OWN,
     
     // Partners can manage referrals and view analytics
     PermissionKey.REFERRAL_CREATE_OWN,

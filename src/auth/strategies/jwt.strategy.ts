@@ -107,8 +107,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    */
   private async validatePartner(partnerId: string, sessionId?: string) {
     // 1. Verify partner exists and is active
-    const partner = await this.prisma.partner.findUnique({
-      where: { id: partnerId },
+    const partner = await this.prisma.user.findUnique({
+      where: { id: partnerId, accountType: 'PARTNER' },
       select: {
         id: true,
         email: true,

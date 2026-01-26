@@ -57,6 +57,11 @@ model User {
   account_status              AccountStatus             @default(ACTIVE)
   account_verification_status AccountVerificationStatus @default(PENDING)
   referral_source             String?
+  // Partner-specific fields (nullable, used when accountType=PARTNER)
+  partnerType                 PartnerType?
+  referralCode                String?                   @unique
+  totalReferrals              Int                       @default(0)
+  totalCommission             Float                     @default(0)
   createdAt                   DateTime                  @default(now())
   updatedAt                   DateTime                  @updatedAt
   deletedAt                   DateTime?
@@ -65,9 +70,13 @@ model User {
   verification_document VerificationDocument? @relation("UserVerification")
   bank_account          BankAccount?          @relation("UserBankAccount")
   roles                 UserRole[]
+  partnerRoles          PartnerRole[]         @relation("UserAsPartner")
+  referrals             Referral[]            @relation("PartnerReferrals")
+  referralClicks        ReferralClick[]       @relation("PartnerReferralClicks")
 
   @@index([email])
   @@index([phone])
+  @@index([referralCode])
   @@index([deletedAt])
   @@index([createdAt])
 }
@@ -157,17 +166,18 @@ model UserRole {
 }
 
 // Join table: Partner <-> Role (Many-to-Many)
+// Note: Partners are now users with accountType=PARTNER
 model PartnerRole {
-  partnerId String
-  roleId    String
+  userId String
+  roleId String
 
-  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  role    Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user User @relation("UserAsPartner", fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   assignedAt DateTime @default(now())
 
-  @@id([partnerId, roleId])
-  @@index([partnerId])
+  @@id([userId, roleId])
+  @@index([userId])
   @@index([roleId])
 }
 
@@ -190,37 +200,6 @@ model RolePermission {
 // Partner & Referral Models
 // ========================================
 
-model Partner {
-  id                          String                    @id @default(uuid())
-  firstName                   String
-  lastName                    String
-  email                       String                    @unique
-  phone                       String                    @unique
-  password                    String
-  isEmailVerified             Boolean                   @default(false)
-  account_status              AccountStatus             @default(ACTIVE)
-  account_verification_status AccountVerificationStatus @default(PENDING)
-  accountType                 AccountType               @default(PARTNER)
-  partnerType                 PartnerType
-  referralCode                String?                   @unique // Generated only after KYC verification
-  totalReferrals              Int                       @default(0)
-  totalCommission             Float                     @default(0)
-  createdAt                   DateTime                  @default(now())
-  updatedAt                   DateTime                  @updatedAt
-  deletedAt                   DateTime?
-
-  // Relations
-  roles          PartnerRole[]
-  referrals      Referral[]
-  referralClicks ReferralClick[]
-
-  @@index([email])
-  @@index([phone])
-  @@index([referralCode])
-  @@index([deletedAt])
-  @@index([createdAt])
-}
-
 // Track actual conversions (user signups)
 model Referral {
   id           String   @id @default(uuid())
@@ -232,7 +211,7 @@ model Referral {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partner User @relation("PartnerReferrals", fields: [partnerId], references: [id], onDelete: Cascade)
 
   @@index([partnerId])
   @@index([userId])
@@ -248,7 +227,7 @@ model ReferralClick {
   userAgent String?
   clickedAt DateTime @default(now())
 
-  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partner User @relation("PartnerReferralClicks", fields: [partnerId], references: [id], onDelete: Cascade)
 
   @@index([partnerId])
   @@index([clickedAt])

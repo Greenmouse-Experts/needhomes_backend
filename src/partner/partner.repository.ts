@@ -1,20 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, Partner } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 
 @Injectable()
 export class PartnerRepository {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: Prisma.PartnerCreateInput): Promise<Partner> {
-    return this.prisma.partner.create({ data });
+  async create(data: Prisma.UserCreateInput): Promise<User> {
+    return this.prisma.user.create({ data });
   }
 
-  async findByEmail(email: string): Promise<Partner | null> {
-    return this.prisma.partner.findUnique({
-      where: { email, deletedAt: null },
+  async findByEmail(email: string): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: { email, deletedAt: null, accountType: 'PARTNER' },
       include: {
-        roles: {
+        partnerRoles: {
           include: {
             role: {
               include: {
@@ -31,23 +31,23 @@ export class PartnerRepository {
     });
   }
 
-  async findByPhone(phone: string): Promise<Partner | null> {
-    return this.prisma.partner.findUnique({
-      where: { phone, deletedAt: null },
+  async findByPhone(phone: string): Promise<User | null> {
+    return this.prisma.user.findFirst({
+      where: { phone, deletedAt: null, accountType: 'PARTNER' },
     });
   }
 
-  async findByReferralCode(referralCode: string): Promise<Partner | null> {
-    return this.prisma.partner.findUnique({
+  async findByReferralCode(referralCode: string): Promise<User | null> {
+    return this.prisma.user.findUnique({
       where: { referralCode, deletedAt: null },
     });
   }
 
-  async findById(id: string): Promise<Partner | null> {
-    return this.prisma.partner.findUnique({
-      where: { id, deletedAt: null },
+  async findById(id: string): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: { id, deletedAt: null, accountType: 'PARTNER' },
       include: {
-        roles: {
+        partnerRoles: {
           include: {
             role: {
               include: {
@@ -66,9 +66,9 @@ export class PartnerRepository {
 
   async update(
     id: string,
-    data: Prisma.PartnerUpdateInput,
-  ): Promise<Partner> {
-    return this.prisma.partner.update({
+    data: Prisma.UserUpdateInput,
+  ): Promise<User> {
+    return this.prisma.user.update({
       where: { id },
       data,
     });

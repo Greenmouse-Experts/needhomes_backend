@@ -243,6 +243,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         isEmailVerified: user.isEmailVerified,
+        AccountType: user.accountType,
       },
       accessToken,
       refreshToken,
@@ -285,10 +286,13 @@ export class AuthService {
   /**
    * Request password reset via OTP sent to email
    */
-  async requestPasswordReset(email: string) {
-    const user = await this.userRepository.findOne({
-      email,
-    });
+  async requestPasswordReset(email: string, accountType?: string) {
+    const whereClause: any = { email };
+    if (accountType) {
+      whereClause.accountType = accountType;
+    }
+
+    const user = await this.userRepository.findOne(whereClause);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -325,8 +329,13 @@ export class AuthService {
   /**
    * Verify password reset OTP and issue short-lived reset token
    */
-  async verifyPasswordResetOtp(email: string, otp: string) {
-    const user = await this.userRepository.findOne({ email });
+  async verifyPasswordResetOtp(email: string, otp: string, accountType?: string) {
+    const whereClause: any = { email };
+    if (accountType) {
+      whereClause.accountType = accountType;
+    }
+
+    const user = await this.userRepository.findOne(whereClause);
 
     if (!user || user.deletedAt) {
       await this.cacheService.incrementPasswordResetOTPAttempts(email);
