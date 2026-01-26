@@ -4,6 +4,7 @@ import {
   UnauthorizedException,
   BadRequestException,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
@@ -226,8 +227,11 @@ export class PartnerService {
     }
 
     if (!partner.isEmailVerified) {
-      throw new UnauthorizedException(
-        'Please verify your email before logging in',
+      // Generate and cache a new OTP, send to partner's email, then inform client
+      const otp = await this.generateAndCacheOTP(partner.email);
+      await this.emailService.sendOTP(partner.email, otp);
+      throw new ForbiddenException(
+        'Email not verified. A new verification code has been sent to your email.',
       );
     }
 
