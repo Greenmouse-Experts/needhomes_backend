@@ -107,6 +107,28 @@ model VerificationDocument {
   @@index([deletedAt])
 }
 
+model Bank {
+  id                      Int      @id
+  name                    String
+  slug                    String?
+  code                    String   @unique
+  longcode                String?
+  gateway                 String?
+  pay_with_bank           Boolean  @default(false)
+  supports_transfer       Boolean  @default(false)
+  available_for_direct_debit Boolean @default(false)
+  active                  Boolean  @default(true)
+  country                 String   @default("Nigeria")
+  currency                String   @default("NGN")
+  type                    String?
+  is_deleted              Boolean  @default(false)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([code])
+  @@index([name])
+}
+
 model BankAccount {
   id            String    @id @default(uuid())
   user_id       String    @unique

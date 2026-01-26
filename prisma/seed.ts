@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import axios from 'axios';
 import {
   PermissionKey,
   RoleName,
@@ -104,8 +105,15 @@ async function seedRolesAndPermissions() {
 }
 
 // Run the seed
-seedRolesAndPermissions()
-  .catch((error) => {
-    console.error(error);
+async function runSeeds() {
+  try {
+    await seedRolesAndPermissions();
+  } catch (err) {
+    console.error(err);
     process.exit(1);
-  });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+runSeeds();

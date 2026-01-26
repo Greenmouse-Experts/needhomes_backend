@@ -5,6 +5,7 @@ import {
 	Body,
 	Query,
 	BadRequestException,
+	Get,
 } from '@nestjs/common';
 import { VerificationService } from './verification.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
@@ -15,7 +16,7 @@ import { PermissionKey } from 'app/common';
 import { RequirePermissions } from 'src/auth/decorators/permissions.decorator';
 import { AccountType } from '@prisma/client';
 
-@Controller('verification')
+@Controller('kyc')
 export class VerificationController {
 	constructor(private readonly verificationService: VerificationService) {}
 
@@ -78,7 +79,7 @@ export class VerificationController {
 
 	@UseGuards(JwtAuthGuard, PermissionsGuard)
    @RequirePermissions(PermissionKey.VERIFICATION_READ_OWN)
-	@Post('get-with-bank')
+	@Get('')
 	async getVerificationWithBank(
 		@CurrentUser('id') userId: string,
 	) {

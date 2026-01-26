@@ -20,8 +20,22 @@ export class BankService {
     ) {}
 
     async getAllBanks(): Promise<any[]> {
-        // delegate to Paystack provider; returns list of banks
-        return this.paystackService.fetchAllBanks();
+        // Return the persisted bank list from the database only.
+        // Seeding should be handled separately (idempotent seed script).
+        const dbBanks = await this.prisma.bank.findMany({ orderBy: { name: 'asc' } });
+        return dbBanks;
+    }
+
+    async findByCode(code: string): Promise<any | null> {
+        if (code === undefined || code === null) return null;
+        const bank = await this.prisma.bank.findFirst({ where: { code: String(code) } });
+        return bank;
+    }
+
+    async findByName(name: string): Promise<any | null> {
+        if (!name) return null;
+        const bank = await this.prisma.bank.findFirst({ where: { name: { equals: name, mode: 'insensitive' } } });
+        return bank;
     }
 
     async resolveAccount(dto: ResolveAccountDto, userId?: string): Promise<any> {
