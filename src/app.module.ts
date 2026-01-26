@@ -10,6 +10,8 @@ import { CacheModule } from './cache/cache.module';
 import { NotificationModule } from './notification/notification.module';
 import { MultimediaModule } from './multimedia/multiimedia.module';
 import { VerificationModule } from './verification/verification.module';
+import { AdminModule } from './admin/admin.module';
+import { BankModule } from './bank/bank.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { VerificationModule } from './verification/verification.module';
     PartnerModule,
     MultimediaModule,
     VerificationModule,
+    AdminModule,
+    BankModule,
   ],
   controllers: [AppController],
   providers: [AppService],

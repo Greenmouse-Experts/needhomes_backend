@@ -294,7 +294,7 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    if (user.isEmailVerified) {
+    if (!user.isEmailVerified) {
       throw new ForbiddenException(
         'Please verify your email before resetting your password.',
       );
