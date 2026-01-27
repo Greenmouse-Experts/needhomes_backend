@@ -1,4 +1,4 @@
-import { Injectable, ExecutionContext } from '@nestjs/common';
+import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 /**
@@ -16,11 +16,18 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   }
 
   handleRequest(err: any, user: any, info: any) {
-  
-    
-    if (err || !user) {
-      throw err || new Error('Unauthorized');
+    // If JWT strategy threw an error, it's already an UnauthorizedException
+    if (err) {
+      throw err;
     }
+
+    // If no user was returned and no error, it means token was missing or invalid
+    if (!user) {
+      // info contains the error details from passport-jwt
+      const errorMessage = info?.message || 'Bearer token is missing or invalid';
+      throw new UnauthorizedException(errorMessage);
+    }
+
     return user;
   }
 }
