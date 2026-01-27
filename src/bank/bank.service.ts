@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PaystackService } from './providers/paystack.service';
 import { ResolveAccountDto } from './dto/resolve-account.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { BankRepository } from './bank.repository';
 
 interface ResolutionResult {
     accountNumber: string;
@@ -17,25 +18,19 @@ export class BankService {
     constructor(
         private readonly paystackService: PaystackService,
         private readonly prisma: PrismaService,
+        private readonly bankRepository: BankRepository,
     ) {}
 
     async getAllBanks(): Promise<any[]> {
-        // Return the persisted bank list from the database only.
-        // Seeding should be handled separately (idempotent seed script).
-        const dbBanks = await this.prisma.bank.findMany({ orderBy: { name: 'asc' } });
-        return dbBanks;
+        return this.bankRepository.getAllBanks();
     }
 
     async findByCode(code: string): Promise<any | null> {
-        if (code === undefined || code === null) return null;
-        const bank = await this.prisma.bank.findFirst({ where: { code: String(code) } });
-        return bank;
+        return this.bankRepository.findByCode(code);
     }
 
     async findByName(name: string): Promise<any | null> {
-        if (!name) return null;
-        const bank = await this.prisma.bank.findFirst({ where: { name: { equals: name, mode: 'insensitive' } } });
-        return bank;
+        return this.bankRepository.findByName(name);
     }
 
     async resolveAccount(dto: ResolveAccountDto, userId?: string): Promise<any> {
@@ -56,24 +51,14 @@ export class BankService {
         if (userId) {
             (async () => {
                 try {
-                    await this.prisma.bankAccount.upsert({
-                        where: { user_id: userId },
-                        create: {
-                            user_id: userId,
-                            account_number: resolution.accountNumber,
-                            bank_code: resolution.bankCode ?? '',
-                            bank_name: resolution.bankName ?? '',
-                            account_name: resolution.accountName ?? '',
-                            country: resolution.country ?? 'NG',
-                        },
-                        update: {
-                            account_number: resolution.accountNumber,
-                            bank_code: resolution.bankCode ?? '',
-                            bank_name: resolution.bankName ?? '',
-                            account_name: resolution.accountName ?? '',
-                            country: resolution.country ?? 'NG',
-                            updatedAt: new Date(),
-                        },
+                    await this.bankRepository.upsertBankAccount(userId, {
+                        user_id: userId,
+                        account_number: resolution.accountNumber,
+                        bank_code: resolution.bankCode ?? '',
+                        bank_name: resolution.bankName ?? '',
+                        account_name: resolution.accountName ?? '',
+                        country: resolution.country ?? 'NG',
+                      updatedAt: new Date(),
                     });
                 } catch (err) {
                     this.logger.error('Failed to persist resolved bank account', err as any);
@@ -82,5 +67,12 @@ export class BankService {
         }
 
         return raw;
+    }
+
+    /**
+     * Return the bank account record for a given user id
+     */
+    async getUserBankAccount(userId: string): Promise<any | null> {
+        return this.bankRepository.getUserBankAccount(userId);
     }
 }

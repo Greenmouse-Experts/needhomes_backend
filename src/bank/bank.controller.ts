@@ -19,6 +19,14 @@ export class BankController {
     }
 
     @UseGuards(JwtAuthGuard, PermissionsGuard)
+    @RequirePermissions(PermissionKey.BANK_READ_OWN)
+    @Get('me')
+    async getMyBankAccount(@CurrentUser() user: AuthUser) {
+        const userId = user?.id as unknown as string;
+        return this.bankService.getUserBankAccount(userId);
+    }
+
+    @UseGuards(JwtAuthGuard, PermissionsGuard)
     @RequirePermissions(PermissionKey.BANK_CREATE_OWN)
     @Post('resolve')
     async resolveAccount(@Body() dto: ResolveAccountDto, @CurrentUser() user: AuthUser) {
