@@ -1,6 +1,8 @@
 
-import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards, Query } from '@nestjs/common';
 import { VerificationService } from 'src/verification/verification.service';
+import { AdminService } from './admin.service';
+import { ListUsersDto } from './dto/account-type.enum';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from 'src/auth/guards/permissions.guard';
 import { RequirePermissions } from 'src/auth/decorators/permissions.decorator';
@@ -8,7 +10,10 @@ import { PermissionKey } from 'app/common';
 
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly verificationService: VerificationService) {}
+  constructor(
+    private readonly verificationService: VerificationService,
+    private readonly adminService: AdminService,
+  ) {}
 
   // View all verification documents (admin)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -37,4 +42,20 @@ export class AdminController {
   ) {
     return this.verificationService.rejectVerification(userId, reason, templateHtml);
   }
+
+  // Admin: list users with optional accountType filter
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PermissionKey.USER_READ_ALL)
+  @Get('users')
+  async listUsers(@Query() query: ListUsersDto) {
+    // Validation handled by ValidationPipe + class-validator via DTO
+    return this.adminService.listUsers(
+      query.accountType as unknown as string,
+      query.page,
+      query.limit,
+    );
+  }
+
+  
+  
 }

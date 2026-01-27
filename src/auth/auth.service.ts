@@ -141,8 +141,8 @@ export class AuthService {
     if (!user.isEmailVerified) {
       // Generate and send new OTP
       const otp = this.generateOTP();
-      await this.cacheService.storeOTP(user.email, otp);
-      await this.emailService.sendOTP(user.email, otp);
+       this.cacheService.storeOTP(user.email, otp);
+       this.emailService.sendOTP(user.email, otp);
       
       throw new ForbiddenException(
         'Email not verified. A new verification code has been sent to your email.',
@@ -221,7 +221,7 @@ export class AuthService {
   const displayName = user.accountType === 'CORPORATE' 
   ? user.companyName || 'need homes user'
 : user.firstName || 'need homes user';
-  await this.emailService.sendWelcomeEmail(user.email, displayName);
+   this.emailService.sendWelcomeEmail(user.email, displayName);
 
     // 6. Get roles and permissions for JWT
     const [roles, permissions] = await this.getRolesAndPermissionsWithCache(user.id);
@@ -412,6 +412,33 @@ export class AuthService {
     return {
       message: 'Password reset successful. Please login with your new credentials.',
     };
+  }
+
+  /**
+   * Change password for authenticated user
+   */
+  async changePassword(userId: string, oldPassword: string, newPassword: string, confirmPassword: string) {
+    if (newPassword !== confirmPassword) {
+      throw new BadRequestException('Passwords do not match');
+    }
+
+    const user = await this.userRepository.findOne({ id: userId });
+    if (!user || user.deletedAt) {
+      throw new NotFoundException('User not found');
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      throw new BadRequestException('Old password is incorrect');
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await this.userRepository.update({ id: userId }, { password: hashed });
+
+    // Invalidate user's sessions
+    await this.cacheService.removeAllUserSessions(userId);
+
+    return { message: 'Password changed successfully' };
   }
 
   /**

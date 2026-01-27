@@ -390,6 +390,33 @@ export class PartnerService {
   }
 
   /**
+   * Change password for authenticated partner
+   */
+  async changePassword(partnerId: string, oldPassword: string, newPassword: string, confirmPassword: string) {
+    if (newPassword !== confirmPassword) {
+      throw new BadRequestException('Passwords do not match');
+    }
+
+    const partner = await this.partnerRepository.findById(partnerId);
+    if (!partner) {
+      throw new NotFoundException('Partner not found');
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, partner.password);
+    if (!isMatch) {
+      throw new BadRequestException('Old password is incorrect');
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await this.partnerRepository.update(partnerId, { password: hashed });
+
+    // Invalidate partner's sessions
+    await this.cacheService.removeAllUserSessions(partnerId);
+
+    return { message: 'Password changed successfully' };
+  }
+
+  /**
    * Generate referral code for verified partner (Admin action)
    */
   async generateReferralCodeForPartner(partnerId: string) {

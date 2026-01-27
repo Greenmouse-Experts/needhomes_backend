@@ -90,3 +90,17 @@ export class ResetPasswordDto {
   @IsNotEmpty({ message: 'Reset token is required' })
   token: string;
 }
+
+export class ChangePasswordDto {
+  @IsString()
+  @IsNotEmpty()
+  oldPassword: string;
+
+  @IsString()
+  @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  newPassword: string;
+
+  @IsString()
+  @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  confirmPassword: string;
+}

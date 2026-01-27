@@ -18,6 +18,7 @@ import {
   LoginPartnerDto,
   VerifyPartnerEmailDto,
 } from '../auth/dto/partner.dto';
+import { ChangePasswordDto } from '../auth/dto/auth.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PartnerOnlyGuard } from '../auth/guards/partner-only.guard';
 import { CurrentPartner, AuthPartner } from '../auth/decorators/current-partner.decorator';
@@ -107,6 +108,16 @@ export class PartnerController {
   @Get('me')
   async getProfile(@CurrentPartner() partner: AuthPartner) {
     return this.partnerService.getProfile(partner.id);
+  }
+
+  /**
+   * Change password for authenticated partner
+   */
+  @Post('password/change')
+  @UseGuards(JwtAuthGuard, PartnerOnlyGuard, PermissionsGuard)
+  @RequirePermissions(PermissionKey.USER_UPDATE_OWN)
+  async changePassword(@CurrentPartner() partner: AuthPartner, @Body() dto: ChangePasswordDto) {
+    return this.partnerService.changePassword(partner.id, dto.oldPassword, dto.newPassword, dto.confirmPassword);
   }
 
   // ========================================

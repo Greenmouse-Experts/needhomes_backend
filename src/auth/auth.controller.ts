@@ -24,6 +24,7 @@ import {
   VerifyResetOtpDto,
   ResetPasswordDto,
 } from './dto/auth.dto';
+import { ChangePasswordDto } from './dto/auth.dto';
 import { AssignRoleDto, RemoveRoleDto } from './dto/role.dto';
 import { PermissionKey } from 'app/common';
 
@@ -116,6 +117,16 @@ export class AuthController {
   @RequirePermissions(PermissionKey.USER_READ_OWN)
   async getProfile(@CurrentUser() user: any) {
     return user;
+  }
+
+  /**
+   * Change password for authenticated user
+   */
+  @Post('password/change')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PermissionKey.USER_UPDATE_OWN)
+  async changePassword(@CurrentUser() user: any, @Body() dto: ChangePasswordDto) {
+    return this.authService.changePassword(user.id, dto.oldPassword, dto.newPassword, dto.confirmPassword);
   }
 
   // ========================================

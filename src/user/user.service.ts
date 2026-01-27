@@ -8,21 +8,20 @@ export class UserService {
   /**
    * Find all users (excluding soft-deleted)
    */
-  async findAll() {
-    return this.userRepository.findMany(
-      {},
+  async findAll(
+    filters?: { accountType?: string },
+    pagination?: { page?: number; limit?: number },
+  ) {
+    const where: any = {};
+    if (filters?.accountType) {
+      where.accountType = filters.accountType.toUpperCase();
+    }
+
+    return this.userRepository.findManyWithPagination(
+      where,
+      pagination,
       'desc',
-      {
-        roles: {
-          include: {
-            role: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-      },
+      undefined,
       {
         id: true,
         firstName: true,
@@ -35,6 +34,15 @@ export class UserService {
         isEmailVerified: true,
         createdAt: true,
         updatedAt: true,
+        roles: {
+          include: {
+            role: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
       },
     );
   }

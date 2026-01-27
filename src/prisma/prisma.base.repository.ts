@@ -93,17 +93,24 @@ export class PrismaBaseRepository<
     deleted?: string | boolean,
   ): Promise<T[]> {
     const { page = 1, limit = 20 } = pagination ?? {};
-    const results = await this.getModelDelegate().findMany({
+    const queryOptions: any = {
       where: {
         ...filters,
         deletedAt: deleted === 'true' ? { not: null } : null,
       },
-      select,
-      include,
       skip: (page - 1) * limit,
       take: +limit,
       orderBy: { createdAt: orderBy },
-    });
+    };
+
+    // Use only select or include, not both
+    if (select) {
+      queryOptions.select = select;
+    } else if (include) {
+      queryOptions.include = include;
+    }
+
+    const results = await this.getModelDelegate().findMany(queryOptions);
     return normalizeDates(results, 'toTZ');
   }
 
@@ -151,12 +158,19 @@ export class PrismaBaseRepository<
     include?: any,
     select?: any,
   ): Promise<T[]> {
-    const results = await this.getModelDelegate().findMany({
+    const queryOptions: any = {
       where: { ...filters, deletedAt: null },
-      select,
-      include,
       orderBy: { createdAt: orderBy },
-    });
+    };
+
+    // Use only select or include, not both
+    if (select) {
+      queryOptions.select = select;
+    } else if (include) {
+      queryOptions.include = include;
+    }
+
+    const results = await this.getModelDelegate().findMany(queryOptions);
     return normalizeDates(results, 'toTZ');
   }
 
