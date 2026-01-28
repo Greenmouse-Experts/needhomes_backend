@@ -2,6 +2,13 @@
 import { Controller, Get, Post, Param, Body, UseGuards, Query } from '@nestjs/common';
 import { VerificationService } from 'src/verification/verification.service';
 import { AdminService } from './admin.service';
+import { PropertyService } from 'src/property/property.service';
+import { OutrightPurchaseDto } from 'src/property/dto/outright-purchase.dto';
+import { CoDevelopmentDto } from 'src/property/dto/codevelopment.dto';
+import { FractionalOwnershipDto } from 'src/property/dto/fractional.dto';
+import { LandBankingDto } from 'src/property/dto/land-banking.dto';
+import { SaveToOwnDto } from 'src/property/dto/save-to-own.dto';
+import { InvestmentModel } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { LoginDto } from 'src/auth/dto/auth.dto';
 import { ListUsersDto } from './dto/account-type.enum';
@@ -17,6 +24,7 @@ export class AdminController {
     private readonly verificationService: VerificationService,
     private readonly adminService: AdminService,
     private readonly authService: AuthService,
+    private readonly propertyService: PropertyService,
   ) {}
 
 
@@ -42,6 +50,42 @@ export class AdminController {
   @Post('login')
   async adminLogin(@Body() dto: LoginDto, @Body('deviceInfo') deviceInfo?: any) {
     return this.authService.adminLogin(dto, deviceInfo);
+  }
+
+  // Admin: upload property (admin-only) - explicit endpoints per investment model so global ValidationPipe validates DTOs
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PermissionKey.USER_CREATE_ALL)
+  @Post('properties/outright')
+  async uploadOutright(@Body() dto: OutrightPurchaseDto) {
+    return this.propertyService.createProperty(InvestmentModel.OUTRIGHT_PURCHASE, dto);
+  }
+
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PermissionKey.USER_CREATE_ALL)
+  @Post('properties/codevelopment')
+  async uploadCoDevelopment(@Body() dto: CoDevelopmentDto) {
+    return this.propertyService.createProperty(InvestmentModel.CO_DEVELOPMENT, dto);
+  }
+
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PermissionKey.USER_CREATE_ALL)
+  @Post('properties/fractional')
+  async uploadFractional(@Body() dto: FractionalOwnershipDto) {
+    return this.propertyService.createProperty(InvestmentModel.FRACTIONAL_OWNERSHIP, dto);
+  }
+
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PermissionKey.USER_CREATE_ALL)
+  @Post('properties/land-banking')
+  async uploadLandBanking(@Body() dto: LandBankingDto) {
+    return this.propertyService.createProperty(InvestmentModel.LAND_BANKING, dto);
+  }
+
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PermissionKey.USER_CREATE_ALL)
+  @Post('properties/save-to-own')
+  async uploadSaveToOwn(@Body() dto: SaveToOwnDto) {
+    return this.propertyService.createProperty(InvestmentModel.SAVE_TO_OWN, dto);
   }
 
   // Reject verification for a user with reason

@@ -43,6 +43,47 @@ enum VerificationType {
   PARTNER
 }
 
+enum InvestmentModel {
+  OUTRIGHT_PURCHASE
+  CO_DEVELOPMENT
+  FRACTIONAL_OWNERSHIP
+  LAND_BANKING
+  SAVE_TO_OWN
+}
+
+enum PropertyType {
+  RESIDENTIAL
+  COMMERCIAL
+  LAND
+}
+
+enum DevelopmentStage {
+  PLANNING
+  ONGOING
+  COMPLETED
+}
+
+enum exitWindow {
+  MONTHLY
+  QUATERLY
+  ANNUALLY
+  AT_MATURITY
+}
+
+enum PaymentOption {
+  FULL_PAYMENT
+  INSTALLMENT
+}
+
+//enums for codevelopment property fields
+enum ExitRule {
+  ANYTIME
+  AFTER_LOCK_IN_PERIOD
+  AFTER_PROJECT_COMPLETION
+  AT_EXIT_WINDOW_ONLY
+  NOT_ALLOWED
+}
+
 model User {
   id                          String                    @id @default(uuid())
   profilePicture              String?
@@ -108,44 +149,114 @@ model VerificationDocument {
 }
 
 model Bank {
-  id                      Int      @id
-  name                    String
-  slug                    String?
-  code                    String   @unique
-  longcode                String?
-  gateway                 String?
-  pay_with_bank           Boolean  @default(false)
-  supports_transfer       Boolean  @default(false)
-  available_for_direct_debit Boolean @default(false)
-  active                  Boolean  @default(true)
-  country                 String   @default("Nigeria")
-  currency                String   @default("NGN")
-  type                    String?
-  is_deleted              Boolean  @default(false)
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  id                         Int      @id
+  name                       String
+  slug                       String?
+  code                       String   @unique
+  longcode                   String?
+  gateway                    String?
+  pay_with_bank              Boolean  @default(false)
+  supports_transfer          Boolean  @default(false)
+  available_for_direct_debit Boolean  @default(false)
+  active                     Boolean  @default(true)
+  country                    String   @default("Nigeria")
+  currency                   String   @default("NGN")
+  type                       String?
+  is_deleted                 Boolean  @default(false)
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
 
   @@index([code])
   @@index([name])
 }
 
 model BankAccount {
-  id            String    @id @default(uuid())
-  user_id       String    @unique
+  id             String    @id @default(uuid())
+  user_id        String    @unique
   account_number String
-  bank_code     String
-  bank_name     String
-  account_name  String
-  country       String  @default("NG")
-  currency      String  @default("NGN")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
+  bank_code      String
+  bank_name      String
+  account_name   String
+  country        String    @default("NG")
+  currency       String    @default("NGN")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
 
   user User @relation("UserBankAccount", fields: [user_id], references: [id])
 
   @@index([user_id])
   @@index([deletedAt])
+}
+
+model Property {
+  id               String           @id @default(uuid())
+  propertyTitle    String
+  propertyType     PropertyType
+  investmentModel  InvestmentModel
+  location         String
+  description      String
+  developmentStage DevelopmentStage
+  completionDate   DateTime
+  premiumProperty  Boolean         @default(false)
+
+  //media & documents
+  coverImage    String
+  galleryImages String[]
+  videos        String?
+
+  //documents (admin upload only)
+  certificate        String?
+  surveyPlanDocument String?
+  brochure           String?
+  transferDocument   String?
+
+  //pricing and availability
+  basePrice      Int // stored in kobo
+  additionalFees AdditionalFee[] // ← relation
+  availableUnits Int
+  totalPrice     Int
+
+  //fields exclusive to outright purchase 
+  paymentOption       PaymentOption?
+  installmentDuration Int? //months
+
+  //fields exclusive to codevelopment
+  minimumInvestment  Int?
+  profitSharingRatio Float?
+  projectDuration    Int? // in months
+  exitRule           ExitRule?
+
+  //fields exclusive to fractional ownership
+  totalShares   Int?
+  pricePerShare Int? // stored in kobo
+  minimumShares Int?
+  exitWindow    exitWindow?
+
+  //fields exclusive to land_banking
+  plotSize      Float? // in square meters
+  pricePerPlot  Int? // stored in kobo
+  holdingPeriod Int? // in months
+  buyBackOption Boolean?
+
+  //fields exclusive to save_to_own
+  targetPropertyPrice Int? // stored in kobo
+  savingsFrequency   String? // e.g. 'MONTHLY', 'QUATERLY'
+  savingsDuration    Int? // in months
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AdditionalFee {
+  id     String @id @default(uuid())
+  label  String
+  amount Int // stored in kobo
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
 }
 
 // ========================================
