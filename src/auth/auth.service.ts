@@ -7,10 +7,10 @@ import { UserRepository } from '../user/user.repository';
 import { EmailService } from '../notification/email.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { RoleName } from 'app/common';
 import { internationalisePhoneNumber } from 'app/common/utils/phonenumber.utils';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
 import { Prisma, AccountType } from '@prisma/client';
+import { RoleName } from 'app/common';
 
 @Injectable()
 export class AuthService {
@@ -106,6 +106,72 @@ export class AuthService {
       accountType: user.accountType,
       // For development only - remove in production:
       otp: process.env.NODE_ENV === 'dev' ? otp : undefined,
+    };
+  }
+
+  /**
+   * Login for Admin users only. Verifies credentials and ensures user has ADMIN or SUPER_ADMIN role.
+   */
+  async adminLogin(loginDto: LoginDto, deviceInfo?: any) {
+    // 1. Find user
+    const user = await this.userRepository.findOne({ email: loginDto.email });
+
+    if (!user || user.deletedAt) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // 2. Verify password
+    const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // 3. Check account status
+    if (user.account_status !== 'ACTIVE') {
+      throw new UnauthorizedException('Account is not active');
+    }
+
+    // 4. Check email verification
+    if (!user.isEmailVerified) {
+      const otp = this.generateOTP();
+      this.cacheService.storeOTP(user.email, otp);
+      this.emailService.sendOTP(user.email, otp);
+      throw new ForbiddenException(
+        'Email not verified. A new verification code has been sent to your email.',
+      );
+    }
+
+    // 5. Get roles and permissions (with caching)
+    const [roles, permissions] = await this.getRolesAndPermissionsWithCache(user.id);
+
+    // 6. Ensure user is ADMIN or SUPER_ADMIN
+    if (!roles.includes(RoleName.ADMIN) && !roles.includes(RoleName.SUPER_ADMIN)) {
+      throw new ForbiddenException('User is not an admin');
+    }
+
+    // 7. Generate tokens and session
+    const { accessToken, refreshToken, sessionId } = await this.generateTokensWithSession(
+      user.id,
+      user.email,
+      roles,
+      permissions,
+      deviceInfo,
+    );
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        accountType: user.accountType,
+        isEmailVerified: user.isEmailVerified,
+        roles,
+        permissions,
+      },
+      accessToken,
+      refreshToken,
+      sessionId,
     };
   }
 

@@ -3,7 +3,8 @@ import { VerificationRepository } from './verification.repository';
 import { EmailService } from 'src/notification/email.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { userVerificationDto, partnerVerificationDto, companyVerificationDto } from './dto/verification.dto';
-import { VerificationType, AccountVerificationStatus } from '@prisma/client';
+import { VerificationType, AccountVerificationStatus, AccountType } from '@prisma/client';
+import { PartnerService } from 'src/partner/partner.service';
 
 @Injectable()
 export class VerificationService {
@@ -11,6 +12,7 @@ export class VerificationService {
 		private readonly verificationRepository: VerificationRepository,
 		private readonly prisma: PrismaService,
 		private readonly emailService: EmailService,
+		private readonly partnerService: PartnerService,
 	) {}
 
 	/**
@@ -27,8 +29,8 @@ export class VerificationService {
 		const verification = await this.verificationRepository.findByUserId(userId);
 		if (!verification) throw new NotFoundException('Verification document not found');
 
-		// Get user contact info
-		const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { email: true, firstName: true } });
+		// Get user contact info and account type
+		const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { email: true, firstName: true, accountType: true } });
 
 		// Mark user as VERIFIED and clear any rejection reason
 		await this.prisma.user.update({ where: { id: userId }, data: { account_verification_status: 'VERIFIED' } });
@@ -41,6 +43,12 @@ export class VerificationService {
 			} catch (err) {
 				// swallow email errors but log via EmailService
 			}
+		}
+
+		// If the user is a partner, attempt to generate a referral code (fire-and-forget)
+		if (user?.accountType === AccountType.PARTNER) {
+			// Do not await; run asynchronously and swallow errors to avoid blocking approval
+			this.partnerService.generateReferralCodeForPartner(userId).catch(() => {});
 		}
 
 		return { message: 'Verification approved' };

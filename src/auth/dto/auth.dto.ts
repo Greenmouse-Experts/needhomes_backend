@@ -104,3 +104,32 @@ export class ChangePasswordDto {
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
   confirmPassword: string;
 }
+
+export class UpdateProfileDto {
+  @IsOptional()
+  @IsString()
+  firstName?: string;
+
+  @IsOptional()
+  @IsString()
+  lastName?: string;
+
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^[+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/, {
+    message: 'Please provide a valid phone number',
+  })
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @IsOptional()
+  @IsString()
+  companyName?: string;
+}

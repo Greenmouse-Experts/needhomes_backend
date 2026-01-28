@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from './user.repository';
+import { UpdateProfileDto } from 'src/auth/dto/auth.dto';
 
 @Injectable()
 export class UserService {
@@ -119,5 +120,18 @@ export class UserService {
     }
 
     return this.userRepository.update({ id }, { deletedAt: new Date() });
+  }
+
+  /**
+   * Update profile for an authenticated user (only profile fields)
+   */
+  async updateUserProfile(userId: string, data: UpdateProfileDto) {
+    const user = await this.userRepository.findOne({ id: userId });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+    // `UpdateProfileDto` restricts allowed fields; trust DTO validation
+    return this.userRepository.update({ id: userId }, data as any);
   }
 }

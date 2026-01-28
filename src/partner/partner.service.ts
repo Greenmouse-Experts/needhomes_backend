@@ -5,6 +5,7 @@ import {
   BadRequestException,
   NotFoundException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
@@ -23,10 +24,12 @@ import { internationalisePhoneNumber } from 'app/common/utils/phonenumber.utils'
 import { RbacService } from '../auth/rbac.service';
 import { AuthService } from '../auth/auth.service';
 import { AccountType } from '@prisma/client';
+import { UpdateProfileDto } from 'src/auth/dto/auth.dto';
 
 
 @Injectable()
 export class PartnerService {
+  private readonly logger = new Logger(PartnerService.name);
   constructor(
     private partnerRepository: PartnerRepository,
     private jwtService: JwtService,
@@ -390,6 +393,42 @@ export class PartnerService {
   }
 
   /**
+   * Update partner profile for authenticated partner
+   */
+  async updatePartnerProfile(partnerId: string, data: UpdateProfileDto) {
+    const partner = await this.partnerRepository.findById(partnerId);
+    if (!partner) {
+      throw new NotFoundException('Partner not found');
+    }
+
+    // `UpdateProfileDto` restricts allowed fields; trust DTO validation
+
+    // If updating email, ensure it's not used by another partner/user
+    if (data.email && data.email !== partner.email) {
+      const existing = await this.partnerRepository.findByEmail(data.email);
+      if (existing && existing.id !== partnerId) {
+        throw new ConflictException('Email already in use');
+      }
+    }
+
+    // If updating phone, normalise and ensure uniqueness
+    if (data.phone) {
+      const phoneNumber = internationalisePhoneNumber(data.phone);
+      const existingPhone = await this.partnerRepository.findByPhone(phoneNumber);
+      if (existingPhone && existingPhone.id !== partnerId) {
+        throw new ConflictException('Phone number already in use');
+      }
+      data.phone = phoneNumber;
+    }
+
+    const updated = await this.partnerRepository.update(partnerId, data as any);
+
+    // Return sanitized profile
+    const { password, ...rest } = updated as any;
+    return rest;
+  }
+
+  /**
    * Change password for authenticated partner
    */
   async changePassword(partnerId: string, oldPassword: string, newPassword: string, confirmPassword: string) {
@@ -420,6 +459,7 @@ export class PartnerService {
    * Generate referral code for verified partner (Admin action)
    */
   async generateReferralCodeForPartner(partnerId: string) {
+    this.logger.log(`Generating referral code for partner ID: ${partnerId}`);
     const partner = await this.partnerRepository.findById(partnerId);
     
     if (!partner) {
