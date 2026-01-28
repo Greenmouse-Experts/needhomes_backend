@@ -198,6 +198,7 @@ model Property {
   description      String
   developmentStage DevelopmentStage
   completionDate   DateTime
+  published        Boolean         @default(true)
   premiumProperty  Boolean         @default(false)
 
   //media & documents
