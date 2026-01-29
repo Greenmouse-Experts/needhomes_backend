@@ -25,21 +25,23 @@ export class VerificationService {
 	/**
 	 * Admin: approve a user's verification
 	 */
-	async approveVerification(userId: string) {
-		const verification = await this.verificationRepository.findByUserId(userId);
+	async approveVerification(verificationId: string) {
+		const verification = await this.verificationRepository.findById(verificationId);
 		if (!verification) throw new NotFoundException('Verification document not found');
+
+		const userId = verification.user_id;
 
 		// Get user contact info and account type
 		const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { email: true, firstName: true, accountType: true } });
 
-		// Mark user as VERIFIED and clear any rejection reason
-		await this.prisma.user.update({ where: { id: userId }, data: { account_verification_status: 'VERIFIED' } });
-		await this.prisma.verificationDocument.update({ where: { user_id: userId }, data: { RejectionReason: null } });
+		// Mark user as VERIFIED and clear any rejection reason on the verification record
+		 this.prisma.user.update({ where: { id: userId }, data: { account_verification_status: 'VERIFIED' } });
+		 this.prisma.verificationDocument.update({ where: { id: verificationId }, data: { RejectionReason: null } });
 
 		// Send email notification (best-effort)
 		if (user?.email) {
 			try {
-				await this.emailService.sendVerificationApprovedEmail(user.email, user.firstName || '');
+				 this.emailService.sendVerificationApprovedEmail(user.email, user.firstName || '');
 			} catch (err) {
 				// swallow email errors but log via EmailService
 			}
@@ -57,11 +59,13 @@ export class VerificationService {
 	/**
 	 * Admin: reject a user's verification with a reason
 	 */
-	async rejectVerification(userId: string, reason: string, templateHtml?: string) {
-		const verification = await this.verificationRepository.findByUserId(userId);
+	async rejectVerification(verificationId: string, reason: string, templateHtml?: string) {
+		const verification = await this.verificationRepository.findById(verificationId);
 		if (!verification) throw new NotFoundException('Verification document not found');
 
-		await this.prisma.verificationDocument.update({ where: { user_id: userId }, data: { RejectionReason: reason } });
+		const userId = verification.user_id;
+
+		await this.prisma.verificationDocument.update({ where: { id: verificationId }, data: { RejectionReason: reason } });
 		// Keep user in PENDING state
 		await this.prisma.user.update({ where: { id: userId }, data: { account_verification_status: 'PENDING' } });
 

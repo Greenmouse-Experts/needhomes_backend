@@ -43,9 +43,21 @@ export class AdminController {
   // Approve verification for a user
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequirePermissions(PermissionKey.VERIFICATION_APPROVE_ALL)
-  @Post('verifications/:userId/accept')
-  async approveVerification(@Param('userId') userId: string) {
-    return this.verificationService.approveVerification(userId);
+  @Post('verifications/:id/accept')
+  async approveVerification(@Param('id') id: string) {
+    return this.verificationService.approveVerification(id);
+  }
+
+  // Reject verification by verification document id with reason
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PermissionKey.VERIFICATION_REJECT_ALL)
+  @Post('verifications/:id/reject')
+  async rejectVerification(
+    @Param('id') id: string,
+    @Body('reason') reason: string,
+    @Body('templateHtml') templateHtml?: string,
+  ) {
+    return this.verificationService.rejectVerification(id, reason, templateHtml);
   }
 
   // Admin login
@@ -90,17 +102,7 @@ export class AdminController {
     return this.propertyService.createProperty(InvestmentModel.SAVE_TO_OWN, dto);
   }
 
-  // Reject verification for a user with reason
-  @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @RequirePermissions(PermissionKey.VERIFICATION_REJECT_ALL)
-  @Post('verifications/:userId/reject')
-  async rejectVerification(
-    @Param('userId') userId: string,
-    @Body('reason') reason: string,
-    @Body('templateHtml') templateHtml?: string,
-  ) {
-    return this.verificationService.rejectVerification(userId, reason, templateHtml);
-  }
+  
 
   // Admin: list users with optional accountType filter
   @UseGuards(JwtAuthGuard, PermissionsGuard)

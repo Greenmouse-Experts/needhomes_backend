@@ -25,6 +25,12 @@ export class VerificationRepository {
     });
   }
 
+  async findById(id: string) {
+    return this.prisma.verificationDocument.findUnique({
+      where: { id },
+    });
+  }
+
  
   
   /**
