@@ -30,4 +30,26 @@ export class PropertyRepository {
       });
     });
   }
+
+  async findPublished(investmentModel?: string, pagination?: { page?: number; limit?: number }) {
+    const where: any = { published: true };
+    if (investmentModel) where.investmentModel = investmentModel;
+
+    const { page = 1, limit = 20 } = pagination ?? {};
+
+    return this.prisma.property.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: { additionalFees: true },
+      skip: (page - 1) * limit,
+      take: +limit,
+    });
+  }
+
+  async updatePublished(propertyId: string, published: boolean) {
+    return this.prisma.property.update({
+      where: { id: propertyId },
+      data: { published },
+    });
+  }
 }

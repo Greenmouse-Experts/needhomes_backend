@@ -1,5 +1,5 @@
 
-import { Controller, Get, Post, Param, Body, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards, Query, Patch } from '@nestjs/common';
 import { VerificationService } from 'src/verification/verification.service';
 import { AdminService } from './admin.service';
 import { PropertyService } from 'src/property/property.service';
@@ -17,6 +17,8 @@ import { PermissionsGuard } from 'src/auth/guards/permissions.guard';
 import { RequirePermissions } from 'src/auth/decorators/permissions.decorator';
 import { PermissionKey } from 'app/common';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { ListPropertiesDto } from './dto/list-properties.dto';
+import { UpdatePropertyPublishedDto } from './dto/update-property.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -111,6 +113,29 @@ export class AdminController {
       query.page,
       query.limit,
     );
+  }
+
+  // Admin: list properties (with pagination and optional investmentModel filter)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PermissionKey.USER_READ_ALL)
+  @Get('properties')
+  async adminListProperties(@Query() query: ListPropertiesDto) {
+    return this.propertyService.listPublished(
+      query.investmentModel as unknown as string,
+      query.page,
+      query.limit,
+    );
+  }
+
+  // Admin: update property's published flag
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PermissionKey.USER_UPDATE_ALL)
+  @Patch('properties/:id/published')
+  async updatePropertyPublished(
+    @Param('id') id: string,
+    @Body() body: UpdatePropertyPublishedDto,
+  ) {
+    return this.propertyService.updatePublished(id, body.published);
   }
 
   //view user verification

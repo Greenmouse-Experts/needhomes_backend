@@ -11,4 +11,13 @@ export class PropertyService {
     const data = { ...payload, investmentModel: model };
     return this.propertyRepository.createProperty(data);
   }
+
+  async listPublished(investmentModel?: string, page?: number, limit?: number) {
+    const pagination = { page, limit };
+    return this.propertyRepository.findPublished(investmentModel, pagination);
+  }
+
+  async updatePublished(propertyId: string, published: boolean) {
+    return this.propertyRepository.updatePublished(propertyId, published);
+  }
 }
