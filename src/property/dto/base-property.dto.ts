@@ -17,8 +17,9 @@ export class BasePropertyDto {
   @IsEnum(PropertyType)
   propertyType: PropertyType;
 
+  @IsOptional()
   @IsEnum(InvestmentModel)
-  investmentModel: InvestmentModel;
+  investmentModel?: InvestmentModel;
 
   @IsString()
   location: string;

@@ -3,7 +3,7 @@ import { VerificationRepository } from './verification.repository';
 import { EmailService } from 'src/notification/email.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { userVerificationDto, partnerVerificationDto, companyVerificationDto } from './dto/verification.dto';
-import { VerificationType, AccountVerificationStatus, AccountType } from '@prisma/client';
+import { VerificationType, AccountVerificationStatus, AccountType, AccountVerificationDocumentStatus } from '@prisma/client';
 import { PartnerService } from 'src/partner/partner.service';
 
 @Injectable()
@@ -35,8 +35,8 @@ export class VerificationService {
 		const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { email: true, firstName: true, accountType: true } });
 
 		// Mark user as VERIFIED and clear any rejection reason on the verification record
-		 this.prisma.user.update({ where: { id: userId }, data: { account_verification_status: 'VERIFIED' } });
-		 this.prisma.verificationDocument.update({ where: { id: verificationId }, data: { RejectionReason: null } });
+		 await this.prisma.user.update({ where: { id: userId }, data: { account_verification_status: AccountVerificationStatus.VERIFIED } });
+		 await this.prisma.verificationDocument.update({ where: { id: verificationId }, data: { RejectionReason: null, status: AccountVerificationDocumentStatus.VERIFIED } });
 
 		// Send email notification (best-effort)
 		if (user?.email) {
@@ -65,9 +65,9 @@ export class VerificationService {
 
 		const userId = verification.user_id;
 
-		await this.prisma.verificationDocument.update({ where: { id: verificationId }, data: { RejectionReason: reason } });
+		await this.prisma.verificationDocument.update({ where: { id: verificationId }, data: { RejectionReason: reason, status: AccountVerificationDocumentStatus.REJECTED } });
 		// Keep user in PENDING state
-		await this.prisma.user.update({ where: { id: userId }, data: { account_verification_status: 'PENDING' } });
+		await this.prisma.user.update({ where: { id: userId }, data: { account_verification_status: AccountVerificationStatus.PENDING } });
 
 		// Send rejection email (best-effort)
 		const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { email: true, firstName: true } });
@@ -98,6 +98,7 @@ export class VerificationService {
 		const payload: any = {
 			...dto,
 			verificationType,
+			status: AccountVerificationDocumentStatus.PENDING,
 		};
 
 		const verification = await this.verificationRepository.createOrUpdateVerification(userId, payload);
@@ -123,6 +124,13 @@ export class VerificationService {
 			throw new NotFoundException('Verification document not found');
 		}
 
-		return result;
+		// also include user's account verification status (KYC status)
+		const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { account_verification_status: true } });
+
+		return {
+			verification: result.verification,
+			bank: result.bank,
+			kycStatus: user?.account_verification_status || null,
+		};
 	}
 }

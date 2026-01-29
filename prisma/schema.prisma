@@ -37,6 +37,12 @@ enum AccountVerificationStatus {
   VERIFIED
 }
 
+enum AccountVerificationDocumentStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
 enum VerificationType {
   INDIVIDUAL
   CORPORATE
@@ -136,6 +142,7 @@ model VerificationDocument {
   utilityBill      String?
   address          String?
   verificationType VerificationType
+  status           AccountVerificationDocumentStatus @default(PENDING)
   submitedAt       DateTime         @default(now())
   RejectionReason  String?
   createdAt        DateTime         @default(now())
