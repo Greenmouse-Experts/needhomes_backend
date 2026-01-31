@@ -47,6 +47,15 @@ export enum PermissionKey {
   REFERRAL_DELETE_ALL = 'referral.delete_all',
   REFERRAL_MANAGE_COMMISSION = 'referral.manage_commission',
 
+  // Subscription permissions
+  SUBSCRIPTION_CREATE_ALL = 'subscription.create_all',
+  SUBSCRIPTION_READ_ALL = 'subscription.read_all',
+  SUBSCRIPTION_UPDATE_ALL = 'subscription.update_all',
+  SUBSCRIPTION_DELETE_ALL = 'subscription.delete_all',
+  SUBSCRIPTION_CREATE_OWN = 'subscription.create_own',
+  SUBSCRIPTION_READ_OWN = 'subscription.read_own',
+  SUBSCRIPTION_UPDATE_OWN = 'subscription.update_own',
+
   // System permissions
   SYSTEM_MANAGE = 'system.manage',
   AUDIT_READ = 'audit.read',
@@ -80,6 +89,11 @@ export const ROLE_PERMISSIONS: Record<RoleName, PermissionKey[]> = {
     PermissionKey.BANK_READ_OWN,
     PermissionKey.BANK_UPDATE_OWN,
     PermissionKey.BANK_DELETE_OWN,
+    // Subscriptions: users may create and manage their own subscriptions
+    PermissionKey.SUBSCRIPTION_CREATE_OWN,
+    PermissionKey.SUBSCRIPTION_READ_OWN,
+    PermissionKey.SUBSCRIPTION_READ_ALL,
+    PermissionKey.SUBSCRIPTION_UPDATE_OWN,
   ],
 
   [RoleName.PARTNER]: [
@@ -102,6 +116,11 @@ export const ROLE_PERMISSIONS: Record<RoleName, PermissionKey[]> = {
     PermissionKey.REFERRAL_CREATE_OWN,
     PermissionKey.REFERRAL_READ_OWN,
     PermissionKey.REFERRAL_UPDATE_OWN,
+    // Partners can also manage and view subscriptions
+    PermissionKey.SUBSCRIPTION_CREATE_OWN,
+    PermissionKey.SUBSCRIPTION_READ_OWN,
+    PermissionKey.SUBSCRIPTION_READ_ALL,
+    PermissionKey.SUBSCRIPTION_UPDATE_OWN,
   ],
 
   [RoleName.ADMIN]: [
@@ -119,6 +138,10 @@ export const ROLE_PERMISSIONS: Record<RoleName, PermissionKey[]> = {
     PermissionKey.REFERRAL_UPDATE_ALL,
     PermissionKey.REFERRAL_DELETE_ALL,
     PermissionKey.REFERRAL_MANAGE_COMMISSION,
+    PermissionKey.SUBSCRIPTION_CREATE_ALL,
+    PermissionKey.SUBSCRIPTION_READ_ALL,
+    PermissionKey.SUBSCRIPTION_UPDATE_ALL,
+    PermissionKey.SUBSCRIPTION_DELETE_ALL,
     PermissionKey.AUDIT_READ,
   ],
 
@@ -171,6 +194,13 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionKey, string> = {
   [PermissionKey.REFERRAL_UPDATE_ALL]: 'Update any referral',
   [PermissionKey.REFERRAL_DELETE_ALL]: 'Delete any referral',
   [PermissionKey.REFERRAL_MANAGE_COMMISSION]: 'Manage referral commissions',
+  [PermissionKey.SUBSCRIPTION_CREATE_ALL]: 'Create subscription plans',
+  [PermissionKey.SUBSCRIPTION_READ_ALL]: 'View subscription plans',
+  [PermissionKey.SUBSCRIPTION_UPDATE_ALL]: 'Update subscription plans',
+  [PermissionKey.SUBSCRIPTION_DELETE_ALL]: 'Delete subscription plans',
+  [PermissionKey.SUBSCRIPTION_CREATE_OWN]: 'Create own subscription',
+  [PermissionKey.SUBSCRIPTION_READ_OWN]: 'View own subscription',
+  [PermissionKey.SUBSCRIPTION_UPDATE_OWN]: 'Update own subscription',
   [PermissionKey.SYSTEM_MANAGE]: 'Manage system settings',
   [PermissionKey.AUDIT_READ]: 'View audit logs',
 };

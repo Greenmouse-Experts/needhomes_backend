@@ -6,9 +6,10 @@ import { VerificationModule } from 'src/verification/verification.module';
 import { UserModule } from 'src/user/user.module';
 import { AuthModule } from 'src/auth/auth.module';
 import { PropertyModule } from 'src/property/property.module';
+import { SubscriptionModule } from 'src/subscription/subscription.module';
 
 @Module({
-  imports: [VerificationModule, UserModule, AuthModule, PropertyModule],
+  imports: [VerificationModule, UserModule, AuthModule, PropertyModule, SubscriptionModule, UserModule],
   providers: [AdminService],
   controllers: [AdminController],
   exports: [AdminService],

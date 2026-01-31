@@ -1,5 +1,5 @@
 
-import { Controller, Get, Post, Param, Body, UseGuards, Query, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards, Query, Patch, Delete } from '@nestjs/common';
 import { VerificationService } from 'src/verification/verification.service';
 import { AdminService } from './admin.service';
 import { PropertyService } from 'src/property/property.service';
@@ -19,6 +19,10 @@ import { PermissionKey } from 'app/common';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { ListPropertiesDto } from './dto/list-properties.dto';
 import { UpdatePropertyPublishedDto } from './dto/update-property.dto';
+import { SubscriptionService } from 'src/subscription/subscription.service';
+import { CreateSubscriptionPlanDto } from 'src/subscription/dto/create-subscription-plan.dto';
+import { UpdateSubscriptionPlanDto } from 'src/subscription/dto/update-subscription-plan.dto';
+import { UserService } from 'src/user/user.service';
 
 @Controller('admin')
 export class AdminController {
@@ -27,6 +31,8 @@ export class AdminController {
     private readonly adminService: AdminService,
     private readonly authService: AuthService,
     private readonly propertyService: PropertyService,
+    private readonly subscriptionService: SubscriptionService,
+    private readonly userService: UserService,
   ) {}
 
 
@@ -117,6 +123,14 @@ export class AdminController {
     );
   }
 
+  //Admin: get user details by ID
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PermissionKey.USER_READ_ALL)
+  @Get('users/:id')
+  async getUserById(@Param('id') id: string) {
+    return this.userService.findOne(id);
+  }
+
   // Admin: list properties (with pagination and optional investmentModel filter)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequirePermissions(PermissionKey.USER_READ_ALL)
@@ -149,6 +163,35 @@ export class AdminController {
     ) {
       return this.verificationService.getUserVerification(userId);
     }
+
+  // Admin: manage subscription plans
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PermissionKey.SUBSCRIPTION_CREATE_ALL)
+  @Post('subscriptions')
+  async createSubscription(@Body() dto: CreateSubscriptionPlanDto) {
+    return this.subscriptionService.createPlan(dto);
+  }
+
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PermissionKey.SUBSCRIPTION_UPDATE_ALL)
+  @Patch('subscriptions/:id')
+  async updateSubscription(@Param('id') id: string, @Body() dto: UpdateSubscriptionPlanDto) {
+    return this.subscriptionService.updatePlan(id, dto);
+  }
+
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PermissionKey.SUBSCRIPTION_DELETE_ALL)
+  @Delete('subscriptions/:id')
+  async deleteSubscription(@Param('id') id: string) {
+    return this.subscriptionService.deletePlan(id);
+  }
+
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PermissionKey.SUBSCRIPTION_READ_ALL)
+  @Get('subscriptions')
+  async adminListSubscriptions() {
+    return this.subscriptionService.listPlans();
+  }
 
   
   

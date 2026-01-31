@@ -81,15 +81,7 @@ export class UserController {
     return this.userService.findAll();
   }
 
-  /**
-   * Get specific user by ID
-   * Permission: user.read_all (ADMIN, SUPER_ADMIN)
-   */
-  @Get(':id')
-  @RequirePermissions(PermissionKey.USER_READ_ALL)
-  getUserById(@Param('id') id: string) {
-    return this.userService.findOne(id);
-  }
+
 
   /**
    * Create a new user

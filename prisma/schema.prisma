@@ -90,6 +90,44 @@ enum ExitRule {
   NOT_ALLOWED
 }
 
+enum PlanType {
+  FREE
+  BASIC
+  PREMIUM
+}
+
+
+
+model SubscriptionPlan {
+  id        String   @id @default(cuid())
+
+  // ---- Plan Info ----
+  name      String              // e.g. "Free Plan", "Basic Plan"
+  type      PlanType
+
+  description String?
+
+  // ---- Pricing ----
+  price     Int?                // stored in kobo (₦) — null for free plan
+  validity  Int                 // number of days (e.g. 30 for monthly)
+
+  // ---- Benefits ----
+  canViewPremiumProperty Boolean @default(false)
+  maxInvestments         Int?     // null = unlimited
+
+  // ---- Status ----
+  isActive  Boolean  @default(true)
+
+  // ---- Timestamps ----
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+}
+
+
+
+
 model User {
   id                          String                    @id @default(uuid())
   profilePicture              String?

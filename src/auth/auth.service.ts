@@ -47,8 +47,7 @@ export class AuthService {
       }
     }
 
-    // Internationalize phone number
-    const internationalPhone = internationalisePhoneNumber(registerDto.phone);
+
 
     // 1. Check if user already exists
     const existingUser = await this.userRepository.findOne({
@@ -61,7 +60,7 @@ export class AuthService {
 
     // Check if phone already exists
     const existingPhone = await this.userRepository.findOne({
-      phone: internationalPhone,
+      phone: registerDto.phone,
     });
 
     if (existingPhone) {
@@ -77,7 +76,7 @@ export class AuthService {
       password: hashedPassword,
       firstName: registerDto.firstName || null,
       lastName: registerDto.lastName || null,
-      phone: internationalPhone,
+      phone: registerDto.phone,
       accountType: normalizedAccountType,
       isEmailVerified: false,
       ...(registerDto.companyName && { companyName: registerDto.companyName }),
@@ -237,6 +236,7 @@ export class AuthService {
         isEmailVerified: user.isEmailVerified,
         roles,
         permissions,
+        phone: user.phone,
       },
       accessToken,
       refreshToken,
